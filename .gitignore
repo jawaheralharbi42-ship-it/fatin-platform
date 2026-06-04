@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets / env (لا ترفع أي مفاتيح سرية)
+.env
+.env.*
+*.key
+service_role*.txt
+
+# Dependencies / build
+node_modules/
+dist/
+.cache/

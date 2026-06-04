@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>فطن | منصة تعليمية ذكية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f7fa; --surface:#ffffff; --ink:#15323a; --muted:#5b7079;
+    --primary:#0e8f86; --primary-d:#0a6e67; --primary-l:#e6f5f3;
+    --accent:#5b6ee1; --accent-l:#eceeffd9; --warn:#e7913b; --warn-l:#fdf0e0;
+    --danger:#df5a5a; --danger-l:#fde9e9; --ok:#3aa76d; --ok-l:#e6f5ec;
+    --line:#e6ecee; --shadow:0 6px 24px rgba(20,50,58,.07);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);direction:rtl}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{display:flex;min-height:100vh}
+  /* Sidebar */
+  .sidebar{width:248px;background:var(--surface);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh;flex-shrink:0}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px;font-weight:800;font-size:22px}
+  .brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--accent));
+    display:grid;place-items:center;color:#fff;font-weight:800}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;color:var(--muted);
+    font-weight:500;font-size:15px;margin-bottom:3px;transition:.15s;width:100%;text-align:right}
+  .nav-item:hover{background:var(--primary-l);color:var(--primary-d)}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:var(--shadow)}
+  .nav-item .ico{width:20px;height:20px;flex-shrink:0}
+  .nav-sep{font-size:11px;color:#9fb0b6;font-weight:700;margin:14px 10px 6px}
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:64px;background:var(--surface);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;padding:0 24px;position:sticky;top:0;z-index:20}
+  .search{flex:1;max-width:420px;display:flex;align-items:center;gap:9px;background:var(--bg);
+    border:1px solid var(--line);border-radius:11px;padding:9px 13px;color:var(--muted)}
+  .search input{border:none;background:none;outline:none;flex:1;font-family:inherit;font-size:14px;color:var(--ink)}
+  .top-actions{display:flex;align-items:center;gap:10px;margin-inline-start:auto}
+  .icon-btn{width:40px;height:40px;border-radius:11px;background:var(--bg);display:grid;place-items:center;
+    color:var(--muted);position:relative}
+  .icon-btn:hover{background:var(--primary-l);color:var(--primary-d)}
+  .badge-dot{position:absolute;top:8px;left:9px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+  .avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--primary));
+    color:#fff;display:grid;place-items:center;font-weight:700}
+  .content{padding:26px;flex:1;overflow:auto}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+  .page-head h1{font-size:24px;font-weight:800}
+  .page-head p{color:var(--muted);margin-top:4px;font-size:14px}
+  /* Cards */
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .kpi{display:flex;flex-direction:column;gap:8px}
+  .kpi .row{display:flex;align-items:center;justify-content:space-between}
+  .kpi .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center}
+  .kpi .val{font-size:28px;font-weight:800;line-height:1}
+  .kpi .lbl{color:var(--muted);font-size:14px;font-weight:500}
+  .kpi .chg{font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px}
+  .up{background:var(--ok-l);color:var(--ok)} .down{background:var(--danger-l);color:var(--danger)}
+  .card-title{font-weight:700;font-size:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .pill{font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px}
+  .pill.ai{background:var(--accent-l);color:var(--accent)}
+  /* Bars chart */
+  .bars{display:flex;align-items:flex-end;gap:14px;height:170px;padding-top:8px}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+  .bar{width:60%;border-radius:8px 8px 0 0;background:linear-gradient(180deg,var(--primary),var(--primary-d));transition:.4s}
+  .bar.alt{background:linear-gradient(180deg,var(--accent),#4655c9)}
+  .bar-lbl{font-size:12px;color:var(--muted);font-weight:500}
+  /* Donut */
+  .donut-wrap{display:flex;align-items:center;gap:20px}
+  .legend{display:flex;flex-direction:column;gap:9px;font-size:13px}
+  .legend .li{display:flex;align-items:center;gap:8px;color:var(--muted)}
+  .legend .sw{width:11px;height:11px;border-radius:3px}
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  th{text-align:right;font-size:12px;color:var(--muted);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:13px 12px;font-size:14px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  .tag{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;display:inline-block}
+  .mini-av{width:32px;height:32px;border-radius:9px;background:var(--primary-l);color:var(--primary-d);
+    display:inline-grid;place-items:center;font-weight:700;font-size:13px;margin-left:8px;vertical-align:middle}
+  .btn{background:var(--primary);color:#fff;padding:10px 18px;border-radius:11px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{background:var(--primary-d)} .btn.ghost{background:var(--primary-l);color:var(--primary-d)}
+  .btn.sm{padding:7px 13px;font-size:13px}
+  .progress{height:8px;border-radius:6px;background:var(--line);overflow:hidden}
+  .progress>span{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+  /* Login */
+  .login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+  .login .hero{background:linear-gradient(150deg,var(--primary-d),var(--accent));color:#fff;
+    padding:60px;display:flex;flex-direction:column;justify-content:center;gap:22px;position:relative;overflow:hidden}
+  .login .hero h1{font-size:42px;font-weight:800;line-height:1.2}
+  .login .hero p{font-size:18px;opacity:.92;max-width:420px;line-height:1.8}
+  .hero .feat{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.13);
+    padding:13px 16px;border-radius:14px;backdrop-filter:blur(4px);font-weight:500}
+  .blob{position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
+  .login .form{display:flex;align-items:center;justify-content:center;padding:40px}
+  .form-box{width:100%;max-width:380px}
+  .form-box h2{font-size:26px;font-weight:800;margin-bottom:6px}
+  .form-box .sub{color:var(--muted);margin-bottom:26px}
+  .tabs{display:flex;background:var(--bg);border-radius:12px;padding:5px;margin-bottom:20px}
+  .tabs button{flex:1;padding:9px;border-radius:9px;font-weight:700;font-size:14px;color:var(--muted)}
+  .tabs button.on{background:var(--surface);color:var(--primary-d);box-shadow:var(--shadow)}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:var(--ink)}
+  .field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
+    font-family:inherit;font-size:14px;outline:none;background:var(--surface)}
+  .field input:focus{border-color:var(--primary)}
+  .role-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+  .role-pick button{padding:11px 6px;border:1.5px solid var(--line);border-radius:12px;font-weight:700;
+    font-size:13px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:6px}
+  .role-pick button.on{border-color:var(--primary);background:var(--primary-l);color:var(--primary-d)}
+  /* Lesson */
+  .lesson-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .lesson-tabs button{padding:9px 15px;border-radius:11px;background:var(--surface);border:1px solid var(--line);
+    font-weight:700;font-size:13px;color:var(--muted)}
+  .lesson-tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .ai-box{background:linear-gradient(135deg,var(--accent-l),var(--primary-l));border:1px solid var(--line);
+    border-radius:14px;padding:18px;line-height:2;font-size:15px}
+  .chat{display:flex;flex-direction:column;gap:12px;max-height:340px;overflow:auto;padding:4px}
+  .msg{max-width:78%;padding:12px 15px;border-radius:14px;font-size:14px;line-height:1.8}
+  .msg.user{background:var(--primary);color:#fff;align-self:flex-start;border-bottom-right-radius:4px}
+  .msg.bot{background:var(--bg);align-self:flex-end;border-bottom-left-radius:4px}
+  .chat-input{display:flex;gap:8px;margin-top:14px}
+  .chat-input input{flex:1;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-family:inherit;outline:none}
+  .lib-card{position:relative;overflow:hidden}
+  .lib-cover{height:84px;border-radius:12px;margin-bottom:12px;display:grid;place-items:center;color:#fff;font-size:30px}
+  .soft{color:var(--muted);font-size:13px}
+  .list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .list-row:last-child{border-bottom:none}
+  .roundico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0}
+  @media(max-width:1024px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
+  @media(max-width:820px){
+    .sidebar{position:fixed;right:-260px;z-index:50;transition:.25s;box-shadow:var(--shadow)}
+    .sidebar.open{right:0}
+    .menu-btn{display:grid!important}
+    .login{grid-template-columns:1fr}.login .hero{display:none}
+    .g2,.g3,.g4{grid-template-columns:1fr}
+  }
+  .menu-btn{display:none}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:40}
+  .overlay.show{display:block}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect} = React;
+
+/* ============================================================
+   إعدادات الاتصال بـ Supabase — عدّل القيمتين التاليتين فقط
+   ضع رابط مشروعك والمفتاح العام (anon) من:
+   Supabase → Project Settings → API
+   ============================================================ */
+const SUPABASE_URL = "https://fhnbsongcnuknbakgcrg.supabase.co";   // رابط مشروعك
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobmJzb25nY251a25iYWtnY3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzOTY1NjQsImV4cCI6MjA5NTk3MjU2NH0.wPq8hoBS683dvdhescVd_5RKGiHnYHfngripS14NJG0";   // مفتاح anon public
+
+const CONFIGURED = !SUPABASE_URL.includes("YOUR-PROJECT") && !SUPABASE_ANON_KEY.includes("YOUR-");
+const sb = CONFIGURED ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* ---------- tiny inline icons ---------- */
+const I = ({d,s=20})=>(<svg className="ico" width={s} height={s} viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>);
+const Ico = {
+  dash:<I d={<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></>}/>,
+  users:<I d={<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></>}/>,
+  book:<I d={<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>}/>,
+  brain:<I d={<><path d="M12 5a3 3 0 1 0-5.9.6"/><path d="M12 5a3 3 0 1 1 5.9.6"/><path d="M7 9a3 3 0 0 0 0 6"/><path d="M17 9a3 3 0 0 1 0 6"/><path d="M9 18a3 3 0 0 0 6 0"/><path d="M12 5v13"/></>}/>,
+  chart:<I d={<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>}/>,
+  bell:<I d={<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>}/>,
+  test:<I d={<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>}/>,
+  task:<I d={<><path d="M9 11H3v10h6zM15 3H9v18h6zM21 7h-6v14h6z"/></>}/>,
+  search:<I d={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} s={18}/>,
+  send:<I d={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} s={18}/>,
+  plus:<I d={<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>} s={16}/>,
+  mic:<I d={<><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></>} s={18}/>,
+  star:<I d={<polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/>}/>,
+  grad:<I d={<><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2 3 6 3s6-2 6-3v-5"/></>}/>,
+  shield:<I d={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>}/>,
+  clip:<I d={<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></>}/>,
+  menu:<I d={<><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>}/>,
+};
+
+/* ================= LOGIN (مصادقة Supabase حقيقية) ================= */
+function Login({onAuthed}){
+  const [tab,setTab]=useState('email');
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState('');
+  const [msg,setMsg]=useState('');
+
+  const doLogin=async()=>{
+    setErr('');setMsg('');
+    if(!CONFIGURED){setErr('لم يُضبط رابط ومفتاح Supabase في أعلى الملف. عدّل SUPABASE_URL و SUPABASE_ANON_KEY.');return;}
+    if(tab==='phone'){setErr('دخول الجوال يتطلب تفعيل مزوّد رسائل SMS في Supabase. استخدم البريد حالياً.');return;}
+    if(!email||!pass){setErr('اكتب البريد وكلمة المرور.');return;}
+    setBusy(true);
+    const {error}=await sb.auth.signInWithPassword({email:email.trim(),password:pass});
+    setBusy(false);
+    if(error){setErr('تعذّر الدخول: '+error.message);return;}
+    onAuthed();
+  };
+  const reset=async()=>{
+    setErr('');setMsg('');
+    if(!CONFIGURED){setErr('اضبط إعدادات Supabase أولاً.');return;}
+    if(!email){setErr('اكتب بريدك أولاً ثم اضغط استعادة.');return;}
+    const {error}=await sb.auth.resetPasswordForEmail(email.trim());
+    setMsg(error?'تعذّر الإرسال: '+error.message:'تم إرسال رابط استعادة كلمة المرور إلى بريدك.');
+  };
+
+  return(
+   <div className="login">
+    <div className="hero">
+      <div className="blob" style={{width:260,height:260,top:-60,left:-40}}/>
+      <div className="blob" style={{width:180,height:180,bottom:40,right:-30}}/>
+      <div style={{display:'flex',alignItems:'center',gap:12,fontWeight:800,fontSize:26}}>
+        <span className="logo" style={{width:46,height:46,fontSize:20}}>فـ</span> فطن</div>
+      <h1>منصة تعليمية ذكية<br/>تبني المستقبل بالذكاء الاصطناعي</h1>
+      <p>شرح تفاعلي، تحليل أداء لحظي، توصيات علاجية، وربط متكامل بين الطالب والمعلم وولي الأمر.</p>
+      <div style={{display:'flex',flexDirection:'column',gap:10,maxWidth:380}}>
+        <div className="feat">{Ico.brain} شرح الدروس وتوليد الأسئلة تلقائياً</div>
+        <div className="feat">{Ico.chart} تحليل ذكي لمستوى الطالب وخطط تقوية</div>
+        <div className="feat">{Ico.shield} نظام صلاحيات متقدم وحماية كاملة للبيانات</div>
+      </div>
+    </div>
+    <div className="form">
+      <div className="form-box">
+        <h2>تسجيل الدخول</h2>
+        <p className="sub">سجّل الدخول بحسابك — ويُحدَّد دورك تلقائياً من النظام</p>
+        {!CONFIGURED&&(
+          <div style={{background:'var(--warn-l)',color:'var(--warn)',padding:'11px 14px',borderRadius:11,
+            fontSize:13,fontWeight:600,marginBottom:16,lineHeight:1.7}}>
+            ⚙️ لم يُضبط الاتصال بعد. افتح الملف وعدّل SUPABASE_URL و SUPABASE_ANON_KEY في الأعلى.</div>)}
+        <div className="tabs">
+          <button className={tab==='email'?'on':''} onClick={()=>setTab('email')}>البريد الإلكتروني</button>
+          <button className={tab==='phone'?'on':''} onClick={()=>setTab('phone')}>الجوال (OTP)</button>
+        </div>
+        {tab==='email'?(<>
+          <div className="field"><label>البريد الإلكتروني</label>
+            <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="admin@fatin.edu"/></div>
+          <div className="field"><label>كلمة المرور</label>
+            <input type="password" value={pass} onChange={e=>setPass(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&doLogin()} placeholder="••••••••"/></div>
+        </>):(<>
+          <div className="field"><label>رقم الجوال</label><input placeholder="05xxxxxxxx"/></div>
+          <div className="field"><label>رمز التحقق OTP</label><input placeholder="٤ أرقام"/></div>
+        </>)}
+        {err&&<div style={{background:'var(--danger-l)',color:'var(--danger)',padding:'10px 13px',
+          borderRadius:10,fontSize:13,fontWeight:600,marginBottom:12}}>{err}</div>}
+        {msg&&<div style={{background:'var(--ok-l)',color:'var(--ok)',padding:'10px 13px',
+          borderRadius:10,fontSize:13,fontWeight:600,marginBottom:12}}>{msg}</div>}
+        <button className="btn" style={{width:'100%',justifyContent:'center',marginTop:6,opacity:busy?0.6:1}}
+          disabled={busy} onClick={doLogin}>{busy?'جارٍ الدخول...':'تسجيل الدخول'}</button>
+        <p className="soft" style={{textAlign:'center',marginTop:16,cursor:'pointer'}} onClick={reset}>نسيت كلمة المرور؟</p>
+      </div>
+    </div>
+   </div>);
+}
+
+/* ================ SHARED UI BITS ================ */
+const KPI=({icon,val,lbl,chg,up,tint})=>(
+  <div className="card kpi">
+    <div className="row">
+      <div className="ic" style={{background:tint[0],color:tint[1]}}>{icon}</div>
+      {chg&&<span className={"chg "+(up?'up':'down')}>{up?'▲':'▼'} {chg}</span>}
+    </div>
+    <div className="val">{val}</div><div className="lbl">{lbl}</div>
+  </div>);
+
+const Bars=({data,alt})=>{
+  const max=Math.max(...data.map(d=>d.v));
+  return(<div className="bars">{data.map((d,i)=>(
+    <div className="bar-col" key={i}>
+      <div className={"bar"+(alt&&i%2?' alt':'')} style={{height:(d.v/max*100)+'%'}}/>
+      <div className="bar-lbl">{d.l}</div>
+    </div>))}</div>);
+};
+
+const Donut=({segs})=>{
+  const tot=segs.reduce((a,b)=>a+b.v,0);let acc=0;const R=52,C=2*Math.PI*R;
+  return(<div className="donut-wrap">
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <circle cx="65" cy="65" r={R} fill="none" stroke="var(--line)" strokeWidth="16"/>
+      {segs.map((s,i)=>{const len=s.v/tot*C;const el=(
+        <circle key={i} cx="65" cy="65" r={R} fill="none" stroke={s.c} strokeWidth="16"
+          strokeDasharray={`${len} ${C-len}`} strokeDashoffset={-acc} transform="rotate(-90 65 65)"
+          strokeLinecap="round"/>);acc+=len;return el;})}
+      <text x="65" y="60" textAnchor="middle" fontSize="22" fontWeight="800" fill="var(--ink)">{tot}</text>
+      <text x="65" y="80" textAnchor="middle" fontSize="11" fill="var(--muted)">الإجمالي</text>
+    </svg>
+    <div className="legend">{segs.map((s,i)=>(
+      <div className="li" key={i}><span className="sw" style={{background:s.c}}/>{s.l} — {s.v}</div>))}</div>
+  </div>);
+};
+
+const PageHead=({title,sub,action})=>(
+  <div className="page-head"><div><h1>{title}</h1><p>{sub}</p></div>{action}</div>);
+
+/* ================ ADMIN DASHBOARD ================ */
+function AdminDash({counts,orgName}){
+  const v=(k,demo)=>counts? (counts[k]??0).toLocaleString('en') : demo;   // أرقام حقيقية إن توفرت
+  return(<>
+   <PageHead title="لوحة تحكم مدير النظام" sub={"نظرة شاملة على أداء المنصة — "+(orgName||"مدرسة فطن النموذجية")+(counts?" · بيانات مباشرة":"")}
+     action={<button className="btn">{Ico.plus} مستخدم جديد</button>}/>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.grad} val={v('students','1,248')} lbl="عدد الطلاب" chg="8%" up tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.users} val={v('parents','2,094')} lbl="أولياء الأمور" chg="5%" up tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.book} val={v('teachers','86')} lbl="المعلمون" chg="2" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.test} val={v('assessments','412')} lbl="الاختبارات" chg="12%" up tint={['var(--warn-l)','var(--warn)']}/>
+   </div>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.book} val={v('lessons','3,560')} lbl="عدد الدروس" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.chart} val="78%" lbl="نسبة الإنجاز العامة" chg="4%" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.star} val="84.6" lbl="متوسط التحصيل" chg="1.2" up tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.brain} val="932" lbl="مستخدم نشط الآن" tint={['var(--accent-l)','var(--accent)']}/>
+   </div>
+   <div className="grid g3" style={{marginBottom:16}}>
+     <div className="card" style={{gridColumn:'span 2'}}>
+       <div className="card-title">متوسط التحصيل حسب المادة <span className="pill ai">آخر ٣٠ يوم</span></div>
+       <Bars alt data={[{l:'رياضيات',v:82},{l:'علوم',v:88},{l:'لغتي',v:79},{l:'إنجليزي',v:74},{l:'اجتماعيات',v:91},{l:'حاسب',v:86}]}/>
+     </div>
+     <div className="card">
+       <div className="card-title">توزيع المستخدمين</div>
+       <Donut segs={[{l:'طلاب',v:1248,c:'var(--primary)'},{l:'أولياء أمور',v:2094,c:'var(--accent)'},{l:'معلمون',v:86,c:'var(--warn)'}]}/>
+     </div>
+   </div>
+   <div className="grid g2">
+     <div className="card">
+       <div className="card-title">الجلسات التعليمية اليومية</div>
+       <Bars data={[{l:'سبت',v:540},{l:'أحد',v:880},{l:'إثنين',v:920},{l:'ثلاثاء',v:780},{l:'أربعاء',v:960},{l:'خميس',v:610}]}/>
+     </div>
+     <div className="card">
+       <div className="card-title">أحدث المستخدمين <button className="btn ghost sm">عرض الكل</button></div>
+       <table><thead><tr><th>المستخدم</th><th>الدور</th><th>المرحلة</th><th>الحالة</th></tr></thead>
+       <tbody>
+        {[['سارة العتيبي','طالب','متوسط - أول','active'],['خالد المطيري','ولي أمر','—','active'],
+          ['أ. منى الزهراني','معلم','علوم','active'],['ريان الدوسري','طالب','ابتدائي - سادس','pending']].map((r,i)=>(
+          <tr key={i}><td><span className="mini-av">{r[0][0]}</span>{r[0]}</td><td className="soft">{r[1]}</td>
+          <td className="soft">{r[2]}</td>
+          <td><span className="tag" style={r[3]==='active'?{background:'var(--ok-l)',color:'var(--ok)'}:{background:'var(--warn-l)',color:'var(--warn)'}}>{r[3]==='active'?'نشط':'بانتظار'}</span></td></tr>))}
+       </tbody></table>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ STUDENT DASHBOARD ================ */
+function StudentDash({go}){
+  const subjects=[['الرياضيات','var(--primary)','∑',68],['العلوم','var(--accent)','⚛',84],
+    ['لغتي','var(--warn)','ﻝ',77],['الإنجليزية','#7a5bd1','En',71],['الاجتماعيات','var(--ok)','🗺',90],['الحاسب','#d1585b','</>',88]];
+  return(<>
+   <PageHead title="أهلاً سارة 👋" sub="جاهزة لمواصلة التعلّم اليوم؟ لديك درسان جديدان وواجب واحد"/>
+   <div className="grid g4" style={{marginBottom:18}}>
+     <KPI icon={Ico.book} val="٤ دروس" lbl="مكتملة هذا الأسبوع" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.test} val="92%" lbl="آخر اختبار — علوم" chg="ممتاز" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.star} val="١٬٢٤٠" lbl="نقاط الإنجاز" chg="120" up tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.brain} val="٧ أيام" lbl="سلسلة المواظبة 🔥" tint={['var(--accent-l)','var(--accent)']}/>
+   </div>
+   <div className="card-title" style={{fontSize:18}}>المكتبة التعليمية</div>
+   <div className="grid g3" style={{marginBottom:18}}>
+     {subjects.map((s,i)=>(
+       <div className="card lib-card" key={i} style={{cursor:'pointer'}} onClick={()=>i===0&&go('lesson')}>
+         <div className="lib-cover" style={{background:`linear-gradient(135deg,${s[1]},var(--primary-d))`}}>{s[2]}</div>
+         <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>{s[0]}</div>
+         <div className="soft" style={{marginBottom:10}}>٦ وحدات · ٢٤ درس</div>
+         <div className="progress"><span style={{width:s[3]+'%'}}/></div>
+         <div className="soft" style={{marginTop:7}}>الإتقان {s[3]}%</div>
+       </div>))}
+   </div>
+   <div className="grid g2">
+     <div className="card">
+       <div className="card-title">المهام والواجبات</div>
+       {[['واجب الرياضيات — جمع الكسور','اليوم ٨ مساءً','var(--danger)'],
+         ['اختبار قصير — العلوم','غداً','var(--warn)'],
+         ['نشاط قراءة — لغتي','بعد يومين','var(--ok)']].map((t,i)=>(
+         <div className="list-row" key={i}>
+           <div className="roundico" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{Ico.task}</div>
+           <div style={{flex:1}}><div style={{fontWeight:600}}>{t[0]}</div><div className="soft">موعد التسليم: {t[1]}</div></div>
+           <span className="tag" style={{background:t[2]+'22',color:t[2]}}>قريب</span>
+         </div>))}
+     </div>
+     <div className="card" style={{background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))'}}>
+       <div className="card-title">المساعد الدراسي الذكي <span className="pill ai">{Ico.brain} AI</span></div>
+       <p style={{lineHeight:2,marginBottom:14}}>عندك سؤال صعب؟ اكتبه أو ارفع صورة/ملف وسأشرح لك خطوات الحل وأعطيك أسئلة مشابهة للتدريب.</p>
+       <button className="btn" onClick={()=>go('tutor')}>{Ico.send} افتح المساعد</button>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ LESSON + AI ================ */
+function LessonView(){
+  const [tab,setTab]=useState('explain');
+  const tabs=[['explain','الشرح النصي'],['simple','تبسيط حسب العمر'],['audio','الشرح الصوتي'],
+    ['examples','أمثلة عملية'],['practice','أسئلة تدريبية'],['quiz','اختبار قصير']];
+  const body={
+    explain:'جمع الأعداد الصحيحة يعني ضمّ كميتين. إذا كان للعددين الإشارة نفسها نجمع القيم ونحتفظ بالإشارة. وإذا اختلفت الإشارتان نطرح القيمة الأصغر من الأكبر ونأخذ إشارة الأكبر. مثال: (-3)+(5)=2 لأن 5 أكبر والإشارة موجبة.',
+    simple:'تخيّل أنك تملك ٥ ريالات (+5) وعليك دين ٣ ريالات (-3). كم يتبقى لك؟ يتبقى ٢ ريال! هذا هو جمع الأعداد الصحيحة ببساطة 😊',
+    audio:'🔊 جاري تشغيل الشرح الصوتي بصوت واضح ومناسب لعمرك... (٢:١٤ دقيقة) — يمكنك إعادة تشغيل النقاط الصعبة في أي وقت.',
+    examples:'مثال ١: (-7)+(2) = -5 · مثال ٢: (8)+(-8) = 0 · مثال ٣: (-4)+(-6) = -10 (نفس الإشارة فنجمع).',
+    practice:'١) ما ناتج (-9)+(4)؟  ٢) أكمل: (6)+(__)=0  ٣) صح أم خطأ: مجموع عددين سالبين يكون موجباً.',
+    quiz:'اختبار من ٥ أسئلة اختيار من متعدد ولّدها الذكاء الاصطناعي من هذا الدرس — الوقت ٧ دقائق.'};
+  return(<>
+   <PageHead title="جمع وطرح الأعداد الصحيحة" sub="الرياضيات · الوحدة الأولى: الأعداد الصحيحة · الصف الأول المتوسط"
+     action={<span className="pill ai">{Ico.brain} مُولّد ومُبسّط بالذكاء الاصطناعي</span>}/>
+   <div className="lesson-tabs">
+     {tabs.map(([k,l])=>(<button key={k} className={tab===k?'on':''} onClick={()=>setTab(k)}>{l}</button>))}
+   </div>
+   <div className="grid g3">
+     <div style={{gridColumn:'span 2',display:'flex',flexDirection:'column',gap:16}}>
+       <div className="card"><div className="ai-box">{body[tab]}</div>
+         <div style={{display:'flex',gap:8,marginTop:14,flexWrap:'wrap'}}>
+           <button className="btn ghost sm">{Ico.mic} استمع للشرح</button>
+           <button className="btn ghost sm">{Ico.brain} أعد شرح النقاط الصعبة</button>
+           <button className="btn ghost sm">{Ico.plus} ولّد أمثلة أكثر</button>
+         </div>
+       </div>
+       <div className="card">
+         <div className="card-title">أنواع الأسئلة المتاحة لهذا الدرس</div>
+         <div className="grid g3" style={{gap:10}}>
+           {[['اختيار متعدد',Ico.test],['صح وخطأ',Ico.clip],['مقالي',Ico.book],['ترتيب',Ico.chart],['سحب وإفلات',Ico.task],['واجب منزلي',Ico.task]].map((q,i)=>(
+             <div key={i} style={{background:'var(--bg)',borderRadius:12,padding:'14px 10px',textAlign:'center'}}>
+               <div style={{color:'var(--primary)',display:'grid',placeItems:'center',marginBottom:6}}>{q[1]}</div>
+               <div style={{fontSize:13,fontWeight:700}}>{q[0]}</div></div>))}
+         </div>
+       </div>
+     </div>
+     <div style={{display:'flex',flexDirection:'column',gap:16}}>
+       <div className="card">
+         <div className="card-title">تقدمك في الوحدة</div>
+         <Donut segs={[{l:'مكتمل',v:7,c:'var(--ok)'},{l:'متبقٍ',v:3,c:'var(--line)'}]}/>
+       </div>
+       <div className="card" style={{background:'var(--primary-l)'}}>
+         <div className="card-title">توصية ذكية</div>
+         <p style={{lineHeight:2,fontSize:14}}>لاحظ النظام تكرار خطأ في إشارات الطرح. أنشأنا لك ٣ تمارين علاجية إضافية.</p>
+         <button className="btn sm" style={{marginTop:10}}>ابدأ التمارين</button>
+       </div>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ AI TUTOR CHAT ================ */
+function Tutor(){
+  const [msgs,setMsgs]=useState([
+    {by:'bot',t:'أهلاً سارة! اكتب سؤالك أو ارفع صورة/ملف PDF وسأحلّه لك خطوة بخطوة.'},
+    {by:'user',t:'كيف أحل: (-3) + (5) ؟'},
+    {by:'bot',t:'بكل سرور 🌟\n١) لاحظي اختلاف الإشارتين (سالب وموجب).\n٢) اطرحي القيمة الأصغر من الأكبر: 5 − 3 = 2.\n٣) خذي إشارة العدد الأكبر (5 موجب) فالناتج = +2.\n\nسؤال مشابه للتدريب: ما ناتج (-8) + (6)؟'}]);
+  const [v,setV]=useState('');
+  const send=()=>{if(!v.trim())return;
+    setMsgs(m=>[...m,{by:'user',t:v},{by:'bot',t:'ممتاز! دعيني أحلّها خطوة بخطوة وأعطيكِ مثالاً إضافياً وسؤالين مشابهين للتدريب... ✨'}]);setV('');};
+  return(<>
+   <PageHead title="المساعد الدراسي الذكي" sub="حل الأسئلة · شرح الخطوات · توليد أسئلة مشابهة"
+     action={<span className="pill ai">{Ico.brain} GPT-4o</span>}/>
+   <div className="card" style={{maxWidth:760,margin:'0 auto'}}>
+     <div className="chat">
+       {msgs.map((m,i)=>(<div key={i} className={"msg "+m.by} style={{whiteSpace:'pre-line'}}>{m.t}</div>))}
+     </div>
+     <div className="chat-input">
+       <button className="icon-btn" title="رفع صورة/ملف">{Ico.plus}</button>
+       <input value={v} onChange={e=>setV(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
+         placeholder="اكتب سؤالك هنا..."/>
+       <button className="btn" onClick={send}>{Ico.send} إرسال</button>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ PARENT DASHBOARD ================ */
+function ParentDash(){
+  return(<>
+   <PageHead title="متابعة الأبناء" sub="تابع أداء أبنائك وتلقَّ تقارير ذكية وتوصيات تحسين"
+     action={<button className="btn">{Ico.plus} إضافة مهمة منزلية</button>}/>
+   <div className="grid g2" style={{marginBottom:16}}>
+     {[['سارة العتيبي','الأول المتوسط',86,'متفوقة في العلوم','ضعف في إشارات الطرح'],
+       ['ريان العتيبي','السادس الابتدائي',64,'يحب القراءة','متعثر في الرياضيات']].map((c,i)=>(
+       <div className="card" key={i}>
+         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+           <div className="avatar" style={{width:48,height:48,borderRadius:14}}>{c[0][0]}</div>
+           <div><div style={{fontWeight:800,fontSize:17}}>{c[0]}</div><div className="soft">{c[1]}</div></div>
+           <span className="tag" style={{marginInlineStart:'auto',background:c[2]>=80?'var(--ok-l)':'var(--warn-l)',color:c[2]>=80?'var(--ok)':'var(--warn)'}}>المستوى {c[2]}%</span>
+         </div>
+         <div className="progress" style={{marginBottom:14}}><span style={{width:c[2]+'%'}}/></div>
+         <div className="grid g2" style={{gap:10}}>
+           <div style={{background:'var(--ok-l)',borderRadius:12,padding:12}}>
+             <div className="soft" style={{color:'var(--ok)',fontWeight:700,marginBottom:4}}>نقطة قوة</div>{c[3]}</div>
+           <div style={{background:'var(--danger-l)',borderRadius:12,padding:12}}>
+             <div className="soft" style={{color:'var(--danger)',fontWeight:700,marginBottom:4}}>نقطة ضعف</div>{c[4]}</div>
+         </div>
+       </div>))}
+   </div>
+   <div className="grid g3">
+     <div className="card" style={{gridColumn:'span 2',background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))'}}>
+       <div className="card-title">التقرير الذكي — سارة <span className="pill ai">{Ico.brain} تحليل AI</span></div>
+       <p style={{lineHeight:2.1}}><b>تحليل المستوى:</b> أداء جيد جداً بمعدل إتقان 86%. <b>سبب التأخر الجزئي:</b> أخطاء متكررة في إشارات الطرح للأعداد السالبة وسرعة إجابة عالية تؤدي لأخطاء عشوائية.<br/>
+       <b>خطة التقوية المقترحة:</b> ٣ تمارين علاجية يومية على الإشارات لمدة أسبوع + اختبار تقويمي يوم الخميس. <b>التوقع:</b> ارتفاع الإتقان إلى 93% خلال ١٠ أيام.</p>
+       <button className="btn sm" style={{marginTop:12}}>عرض الخطة الكاملة</button>
+     </div>
+     <div className="card">
+       <div className="card-title">إشعارات</div>
+       {[['انخفاض مستوى — ريان','منذ ساعة','var(--danger)'],['واجب جديد — سارة','منذ ٣ ساعات','var(--accent)'],
+         ['نتيجة اختبار العلوم','أمس','var(--ok)']].map((n,i)=>(
+         <div className="list-row" key={i}>
+           <div className="roundico" style={{background:n[2]+'22',color:n[2]}}>{Ico.bell}</div>
+           <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{n[0]}</div><div className="soft">{n[1]}</div></div>
+         </div>))}
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ TEACHER DASHBOARD ================ */
+function TeacherDash(){
+  return(<>
+   <PageHead title="لوحة المعلم" sub="إدارة الطلاب والدروس والاختبارات ومتابعة مخرجات الذكاء الاصطناعي"
+     action={<button className="btn">{Ico.plus} اختبار جديد بالـ AI</button>}/>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.grad} val="٣ فصول" lbl="١١٢ طالب" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.book} val="٢٤" lbl="درس منشور" tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.test} val="٩" lbl="اختبار بانتظار التصحيح" chg="جديد" tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.star} val="83%" lbl="متوسط أداء الطلاب" chg="3%" up tint={['var(--ok-l)','var(--ok)']}/>
+   </div>
+   <div className="grid g3">
+     <div className="card" style={{gridColumn:'span 2'}}>
+       <div className="card-title">أداء الطلاب — الصف أول/١ <button className="btn ghost sm">تصدير تقرير</button></div>
+       <table><thead><tr><th>الطالب</th><th>الإتقان</th><th>آخر اختبار</th><th>التوصية الذكية</th></tr></thead>
+       <tbody>
+        {[['سارة العتيبي',86,'92%','متابعة المسار'],['ريان الدوسري',64,'58%','خطة تقوية'],
+          ['نورة القحطاني',91,'95%','مسار متقدم'],['فهد الشهري',72,'70%','تمارين إضافية']].map((r,i)=>(
+          <tr key={i}><td><span className="mini-av">{r[0][0]}</span>{r[0]}</td>
+          <td><div style={{display:'flex',alignItems:'center',gap:8}}><div className="progress" style={{width:70}}><span style={{width:r[1]+'%'}}/></div>{r[1]}%</div></td>
+          <td className="soft">{r[2]}</td>
+          <td><span className="tag" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{r[3]}</span></td></tr>))}
+       </tbody></table>
+     </div>
+     <div className="card">
+       <div className="card-title">بنك الأسئلة <span className="pill ai">AI</span></div>
+       <p className="soft" style={{lineHeight:2,marginBottom:12}}>٤٨٠ سؤالاً مصنّفة حسب المادة والصف والوحدة والصعوبة.</p>
+       <Donut segs={[{l:'سهل',v:180,c:'var(--ok)'},{l:'متوسط',v:210,c:'var(--warn)'},{l:'صعب',v:90,c:'var(--danger)'}]}/>
+       <button className="btn sm" style={{marginTop:14,width:'100%',justifyContent:'center'}}>{Ico.plus} توليد أسئلة جديدة</button>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ SUPERVISOR DASHBOARD ================ */
+function SupervisorDash(){
+  return(<>
+   <PageHead title="لوحة المشرف التعليمي" sub="مراقبة المعلمين وجودة المحتوى واستخراج التقارير"/>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.book} val="٨٦" lbl="معلم تحت الإشراف" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.test} val="٩٤%" lbl="جودة المحتوى" chg="2%" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.chart} val="٧٨%" lbl="متوسط إنجاز الفصول" tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.bell} val="٥" lbl="تنبيهات جودة" chg="انتباه" tint={['var(--warn-l)','var(--warn)']}/>
+   </div>
+   <div className="grid g2">
+     <div className="card">
+       <div className="card-title">أداء المعلمين</div>
+       <Bars alt data={[{l:'م. أحمد',v:88},{l:'م. منى',v:94},{l:'م. سعد',v:79},{l:'م. هند',v:91},{l:'م. علي',v:72}]}/>
+     </div>
+     <div className="card">
+       <div className="card-title">جودة المحتوى حسب المادة</div>
+       <table><thead><tr><th>المادة</th><th>دروس</th><th>تقييم AI</th><th>الحالة</th></tr></thead>
+       <tbody>{[['الرياضيات',420,'A','معتمد'],['العلوم',388,'A','معتمد'],['لغتي',360,'B','مراجعة'],['الإنجليزية',300,'B','مراجعة']].map((r,i)=>(
+         <tr key={i}><td>{r[0]}</td><td className="soft">{r[1]}</td><td><b>{r[2]}</b></td>
+         <td><span className="tag" style={r[3]==='معتمد'?{background:'var(--ok-l)',color:'var(--ok)'}:{background:'var(--warn-l)',color:'var(--warn)'}}>{r[3]}</span></td></tr>))}
+       </tbody></table>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ LIBRARY MANAGER (موصول بـ Supabase) ================ */
+const STAGES=[['primary','ابتدائي'],['intermediate','متوسط'],['secondary','ثانوي']];
+function Library({acct}){
+  const [courses,setCourses]=useState([]);
+  const [course,setCourse]=useState(null);
+  const [units,setUnits]=useState([]);
+  const [unit,setUnit]=useState(null);
+  const [lessons,setLessons]=useState([]);
+  const [lesson,setLesson]=useState(null);
+  const [contents,setContents]=useState([]);
+  const [msg,setMsg]=useState('');
+  const [busy,setBusy]=useState(false);
+  // نماذج الإدخال
+  const [cf,setCf]=useState({title:'',subject:'',stage:'intermediate',grade:7});
+  const [uTitle,setUTitle]=useState('');
+  const [lTitle,setLTitle]=useState('');
+  const [cTitle,setCTitle]=useState('');
+  const [cBody,setCBody]=useState('');
+  const fileRef=React.useRef();
+  const pdfRef=React.useRef();
+  const [importing,setImporting]=useState('');
+  const [explaining,setExplaining]=useState(false);
+  const [explainMsg,setExplainMsg]=useState('');
+  const qpdfRef=React.useRef();
+  const [qGrade,setQGrade]=useState(6);
+  const [editId,setEditId]=useState(null);
+  const [eTitle,setETitle]=useState('');
+  const [eGrade,setEGrade]=useState(6);
+  const flash=(m)=>{setMsg(m);setTimeout(()=>setMsg(''),4000);};
+
+  // استخراج نص PDF داخل المتصفح بمكتبة pdf.js
+  const extractPdf=async(file)=>{
+    const pdfjs=window.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjs.getDocument({data:buf}).promise;
+    let text='';
+    for(let p=1;p<=pdf.numPages;p++){
+      setImporting(`جاري قراءة الصفحة ${p} من ${pdf.numPages}...`);
+      const page=await pdf.getPage(p);
+      const c=await page.getTextContent();
+      text+=c.items.map(i=>i.str).join(' ')+'\n';
+    }
+    return text;
+  };
+  // استيراد كتاب المادة كاملاً وتقسيمه تلقائياً
+  const importTextbook=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      setImporting('جاري استخراج نص الـ PDF...');
+      const text=await extractPdf(file);
+      if(!text.trim()){setImporting('');flash('تعذّر استخراج نص — قد يكون PDF صوراً ممسوحة');return;}
+      setImporting('الذكاء الاصطناعي يقسّم الكتاب إلى وحدات ودروس...');
+      const{data,error}=await sb.functions.invoke('split-textbook',{body:{course_id:course.id,text}});
+      setImporting('');if(pdfRef.current)pdfRef.current.value='';
+      if(error){flash('فشل التقسيم: '+(error.message||'تأكد من نشر دالة split-textbook ومفتاح OpenAI'));return;}
+      loadUnits(course);flash(`تم الاستيراد ✅ ${data?.units||0} وحدة و ${data?.lessons||0} درس`);
+    }catch(err){setImporting('');flash('خطأ: '+String(err));}
+  };
+
+  const loadCourses=async()=>{const{data}=await sb.from('courses').select('*').order('created_at',{ascending:false});setCourses(data||[]);};
+  const loadUnits=async(c)=>{const{data}=await sb.from('units').select('*').eq('course_id',c.id).order('position');setUnits(data||[]);};
+  const loadLessons=async(u)=>{const{data}=await sb.from('lessons').select('*').eq('unit_id',u.id).order('position');setLessons(data||[]);};
+  const loadContents=async(l)=>{const{data}=await sb.from('lesson_contents').select('*').eq('lesson_id',l.id).order('created_at');setContents(data||[]);};
+  useEffect(()=>{loadCourses();},[]);
+
+  const addCourse=async()=>{
+    if(!cf.title){flash('اكتب اسم المادة');return;}
+    setBusy(true);
+    const{error}=await sb.from('courses').insert({org_id:acct.org_id,title:cf.title,
+      subject:cf.subject||cf.title,stage:cf.stage,grade_level:Number(cf.grade),
+      is_published:true,created_by:acct.id});
+    setBusy(false);
+    if(error){flash('خطأ: '+error.message);return;}
+    setCf({title:'',subject:'',stage:'intermediate',grade:7});loadCourses();flash('تمت إضافة المادة ✅');
+  };
+  const openCourse=(c)=>{setCourse(c);setUnit(null);setLesson(null);setLessons([]);setContents([]);loadUnits(c);};
+  const addUnit=async()=>{
+    if(!uTitle){flash('اكتب اسم الوحدة');return;}
+    const{error}=await sb.from('units').insert({org_id:acct.org_id,course_id:course.id,
+      title:uTitle,position:units.length+1});
+    if(error){flash('خطأ: '+error.message);return;}
+    setUTitle('');loadUnits(course);flash('تمت إضافة الوحدة ✅');
+  };
+  const openUnit=(u)=>{setUnit(u);setLesson(null);setContents([]);loadLessons(u);};
+  const addLesson=async()=>{
+    if(!lTitle){flash('اكتب اسم الدرس');return;}
+    const{error}=await sb.from('lessons').insert({org_id:acct.org_id,unit_id:unit.id,
+      course_id:course.id,title:lTitle,position:lessons.length+1,is_published:true});
+    if(error){flash('خطأ: '+error.message);return;}
+    setLTitle('');loadLessons(unit);flash('تمت إضافة الدرس ✅');
+  };
+  const openLesson=(l)=>{setLesson(l);loadContents(l);};
+
+  // إضافة محتوى نصي (أفضل مسار للذكاء الاصطناعي — يُفهرَس مباشرة)
+  const addText=async()=>{
+    if(!cBody.trim()){flash('الصق نص الدرس أولاً');return;}
+    setBusy(true);
+    const{data,error}=await sb.from('lesson_contents').insert({org_id:acct.org_id,
+      lesson_id:lesson.id,kind:'text',title:cTitle||'نص الدرس',body:cBody,is_ai_generated:false})
+      .select('id').single();
+    if(error){setBusy(false);flash('خطأ: '+error.message);return;}
+    // محاولة فهرسة المحتوى للذكاء الاصطناعي (تحتاج نشر دالة extract-content)
+    try{await sb.functions.invoke('extract-content',{body:{content_id:data.id,raw_text:cBody}});}catch(e){}
+    setBusy(false);setCTitle('');setCBody('');loadContents(lesson);flash('تم حفظ نص الدرس ✅');
+  };
+  // رفع ملف إلى التخزين
+  const uploadFile=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    setBusy(true);
+    const path=`${acct.org_id}/${lesson.id}/${Date.now()}_${file.name}`;
+    const{error:upErr}=await sb.storage.from('library').upload(path,file);
+    if(upErr){setBusy(false);flash('فشل الرفع: '+upErr.message);return;}
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
+    const kind=ext==='pdf'?'pdf':['doc','docx'].includes(ext)?'word':['ppt','pptx'].includes(ext)?'pptx'
+      :['png','jpg','jpeg'].includes(ext)?'image':['mp4','mov'].includes(ext)?'video':'pdf';
+    const{error}=await sb.from('lesson_contents').insert({org_id:acct.org_id,lesson_id:lesson.id,
+      kind,title:file.name,storage_path:path,is_ai_generated:false});
+    setBusy(false);if(fileRef.current)fileRef.current.value='';
+    if(error){flash('خطأ بحفظ السجل: '+error.message);return;}
+    loadContents(lesson);flash('تم رفع الملف ✅');
+  };
+
+  // تعديل / حذف المادة
+  const startEdit=(c)=>{setEditId(c.id);setETitle(c.title);setEGrade(c.grade_level);};
+  const saveEdit=async(c)=>{
+    const grade=Number(eGrade);
+    const stage=grade<=6?'primary':grade<=9?'intermediate':'secondary';
+    const {error}=await sb.from('courses').update({title:eTitle,subject:eTitle,grade_level:grade,stage}).eq('id',c.id);
+    if(error){flash('خطأ بالتعديل: '+error.message);return;}
+    setEditId(null);loadCourses();flash('تم تعديل المادة ✅');
+  };
+  const deleteCourse=async(c)=>{
+    if(!confirm('حذف مادة «'+c.title+'» وكل وحداتها ودروسها ومحتواها؟ لا يمكن التراجع.'))return;
+    const {error}=await sb.from('courses').delete().eq('id',c.id);
+    if(error){flash('خطأ بالحذف: '+error.message);return;}
+    loadCourses();flash('تم حذف المادة 🗑');
+  };
+
+  // رفع سريع: ينشئ المادة باسم الملف ثم يقسّمها ويضيفها للمكتبة
+  const quickImport=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      const title=file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim();
+      const grade=Number(qGrade);
+      const stage=grade<=6?'primary':grade<=9?'intermediate':'secondary';
+      setImporting('إنشاء المادة: '+title+' ...');
+      const {data:course,error:cErr}=await sb.from('courses').insert({
+        org_id:acct.org_id,title,subject:title,stage,grade_level:grade,
+        is_published:true,created_by:acct.id}).select('id,title').single();
+      if(cErr){setImporting('');flash('خطأ بإنشاء المادة: '+cErr.message);return;}
+      setImporting('جاري استخراج نص الـ PDF...');
+      const text=await extractPdf(file);
+      if(!text.trim()){setImporting('');loadCourses();flash('المادة أُنشئت، لكن تعذّر استخراج النص (قد يكون PDF صوراً).');return;}
+      setImporting('الذكاء الاصطناعي يقسّم الكتاب إلى وحدات ودروس...');
+      const {data,error}=await sb.functions.invoke('split-textbook',{body:{course_id:course.id,text}});
+      setImporting('');if(qpdfRef.current)qpdfRef.current.value='';
+      if(error){loadCourses();flash('المادة أُنشئت لكن فشل التقسيم: '+(error.message||''));return;}
+      loadCourses();flash(`تم ✅ ${course.title}: ${data?.units||0} وحدة و ${data?.lessons||0} درس`);
+    }catch(err){setImporting('');flash('خطأ: '+String(err));}
+  };
+
+  // توليد شرح الدرس بالذكاء الاصطناعي (يستدعي دالة explain-lesson)
+  const doExplain=async()=>{
+    setExplaining(true);setExplainMsg('جاري توليد الشرح بالذكاء الاصطناعي...');
+    const {data,error}=await sb.functions.invoke('explain-lesson',{body:{lesson_id:lesson.id}});
+    setExplaining(false);
+    if(error){setExplainMsg('خطأ: '+(error.message||'تأكد من مفتاح OpenAI'));return;}
+    setExplainMsg(data&&data.cached?'الشرح كان محفوظاً مسبقاً ✅':'تم توليد الشرح بنجاح ✅');
+    loadContents(lesson);
+  };
+
+  const Crumb=()=>(
+    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:18,fontSize:14}}>
+      <button className="btn ghost sm" onClick={()=>{setCourse(null);setUnit(null);setLesson(null);}}>المكتبة</button>
+      {course&&<><span className="soft">/</span><button className="btn ghost sm" onClick={()=>openCourse(course)}>{course.title}</button></>}
+      {unit&&<><span className="soft">/</span><button className="btn ghost sm" onClick={()=>openUnit(unit)}>{unit.title}</button></>}
+      {lesson&&<><span className="soft">/</span><span style={{fontWeight:700}}>{lesson.title}</span></>}
+    </div>);
+
+  return(<>
+   <PageHead title="المكتبة التعليمية" sub="أضف المواد والوحدات والدروس وارفع المحتوى — والذكاء الاصطناعي يشرح ويولّد الأسئلة منه"
+     action={<span className="pill ai">{Ico.book} بيانات مباشرة</span>}/>
+   {msg&&<div className="card" style={{marginBottom:14,background:'var(--primary-l)',color:'var(--primary-d)',fontWeight:600}}>{msg}</div>}
+   <Crumb/>
+
+   {!course&&(<>
+     <div className="card" style={{marginBottom:16,background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))'}}>
+       <div className="card-title">رفع سريع: استيراد كتاب PDF تلقائياً <span className="pill ai">{Ico.brain} بضغطة واحدة</span></div>
+       <p className="soft" style={{lineHeight:1.9,marginBottom:12}}>اختر الصف وارفع ملف الكتاب — تُنشأ المادة باسم الملف تلقائياً، ثم يقسّمها الذكاء الاصطناعي لوحدات ودروس ويضيفها للمكتبة.</p>
+       <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap'}}>
+         <div className="field" style={{margin:0,minWidth:120}}><label>الصف</label>
+           <select value={qGrade} onChange={e=>setQGrade(e.target.value)}
+             style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+             {Array.from({length:12},(_,i)=>i+1).map(g=><option key={g} value={g}>الصف {g}</option>)}</select></div>
+         <div style={{flex:1,minWidth:200}}>
+           {importing
+             ? <div style={{fontWeight:700,color:'var(--primary-d)'}}>{importing}</div>
+             : <input ref={qpdfRef} type="file" accept=".pdf" onChange={quickImport}
+                 style={{width:'100%',padding:10,border:'1px dashed var(--primary)',borderRadius:11,fontFamily:'inherit',background:'var(--surface)'}}/>}
+         </div>
+       </div>
+     </div>
+     <div className="card" style={{marginBottom:16}}>
+       <div className="card-title">إضافة مادة جديدة يدوياً</div>
+       <div className="grid g4" style={{gap:10,alignItems:'end'}}>
+         <div className="field" style={{margin:0}}><label>اسم المادة</label>
+           <input value={cf.title} onChange={e=>setCf({...cf,title:e.target.value})} placeholder="مثال: الرياضيات"/></div>
+         <div className="field" style={{margin:0}}><label>المرحلة</label>
+           <select value={cf.stage} onChange={e=>setCf({...cf,stage:e.target.value})}
+             style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+             {STAGES.map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></div>
+         <div className="field" style={{margin:0}}><label>الصف (1-12)</label>
+           <input type="number" min="1" max="12" value={cf.grade} onChange={e=>setCf({...cf,grade:e.target.value})}/></div>
+         <button className="btn" style={{justifyContent:'center'}} disabled={busy} onClick={addCourse}>{Ico.plus} إضافة</button>
+       </div>
+     </div>
+     <div className="grid g3">
+       {courses.length===0&&<div className="soft">لا توجد مواد بعد — أضف أول مادة من الأعلى.</div>}
+       {courses.map(c=>(
+         <div className="card lib-card" key={c.id}>
+           {editId===c.id?(
+             <div>
+               <div className="field"><label>اسم المادة</label>
+                 <input value={eTitle} onChange={e=>setETitle(e.target.value)}/></div>
+               <div className="field" style={{marginBottom:10}}><label>الصف</label>
+                 <select value={eGrade} onChange={e=>setEGrade(e.target.value)}
+                   style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+                   {Array.from({length:12},(_,i)=>i+1).map(g=><option key={g} value={g}>الصف {g}</option>)}</select></div>
+               <div style={{display:'flex',gap:8}}>
+                 <button className="btn sm" onClick={()=>saveEdit(c)}>حفظ</button>
+                 <button className="btn ghost sm" onClick={()=>setEditId(null)}>إلغاء</button>
+               </div>
+             </div>
+           ):(<>
+             <div className="lib-cover" style={{background:'linear-gradient(135deg,var(--primary),var(--primary-d))',cursor:'pointer'}} onClick={()=>openCourse(c)}>{c.title[0]}</div>
+             <div style={{fontWeight:700,fontSize:16,cursor:'pointer'}} onClick={()=>openCourse(c)}>{c.title}</div>
+             <div className="soft" style={{marginBottom:10}}>{STAGES.find(s=>s[0]===c.stage)?.[1]} · الصف {c.grade_level}</div>
+             <div style={{display:'flex',gap:8}}>
+               <button className="btn ghost sm" onClick={()=>startEdit(c)}>✏ تعديل</button>
+               <button className="btn sm" style={{background:'var(--danger-l)',color:'var(--danger)'}} onClick={()=>deleteCourse(c)}>🗑 حذف</button>
+             </div>
+           </>)}
+         </div>))}
+     </div>
+   </>)}
+
+   {course&&!unit&&(
+     <div className="card">
+       <div className="card-title">وحدات مادة: {course.title} <span className="pill ai">{Ico.brain} استيراد ذكي</span></div>
+       <div style={{background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))',borderRadius:14,padding:16,marginBottom:16}}>
+         <div style={{fontWeight:700,marginBottom:6}}>استيراد كتاب المادة كاملاً (PDF)</div>
+         <p className="soft" style={{lineHeight:1.9,marginBottom:12}}>ارفع ملف الكتاب، والذكاء الاصطناعي يقسّمه تلقائياً إلى وحدات ودروس وينشئها مع المحتوى.</p>
+         {importing
+           ? <div style={{fontWeight:700,color:'var(--primary-d)'}}>{importing}</div>
+           : <input ref={pdfRef} type="file" accept=".pdf" onChange={importTextbook}
+               style={{width:'100%',padding:10,border:'1px dashed var(--primary)',borderRadius:11,fontFamily:'inherit',background:'var(--surface)'}}/>}
+       </div>
+       <div className="card-title" style={{fontSize:14}}>أو أضف وحدة يدوياً</div>
+       <div className="chat-input" style={{marginBottom:14,marginTop:0}}>
+         <input value={uTitle} onChange={e=>setUTitle(e.target.value)} placeholder="اسم الوحدة الجديدة"/>
+         <button className="btn" onClick={addUnit}>{Ico.plus} إضافة وحدة</button>
+       </div>
+       {units.length===0&&<div className="soft">لا توجد وحدات بعد.</div>}
+       {units.map(u=>(
+         <div className="list-row" key={u.id} style={{cursor:'pointer'}} onClick={()=>openUnit(u)}>
+           <div className="roundico" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{Ico.book}</div>
+           <div style={{flex:1,fontWeight:600}}>{u.title}</div><span className="soft">فتح ←</span></div>))}
+     </div>)}
+
+   {unit&&!lesson&&(
+     <div className="card">
+       <div className="card-title">دروس وحدة: {unit.title}</div>
+       <div className="chat-input" style={{marginBottom:14,marginTop:0}}>
+         <input value={lTitle} onChange={e=>setLTitle(e.target.value)} placeholder="اسم الدرس الجديد"/>
+         <button className="btn" onClick={addLesson}>{Ico.plus} إضافة درس</button>
+       </div>
+       {lessons.length===0&&<div className="soft">لا توجد دروس بعد.</div>}
+       {lessons.map(l=>(
+         <div className="list-row" key={l.id} style={{cursor:'pointer'}} onClick={()=>openLesson(l)}>
+           <div className="roundico" style={{background:'var(--accent-l)',color:'var(--accent)'}}>{Ico.star}</div>
+           <div style={{flex:1,fontWeight:600}}>{l.title}</div><span className="soft">المحتوى ←</span></div>))}
+     </div>)}
+
+   {lesson&&(
+     <div className="grid g2">
+       <div className="card">
+         <div className="card-title">محتوى الدرس الحالي
+           <button className="btn sm" disabled={explaining} onClick={doExplain}>{explaining?'...':'✨ ولّد الشرح'}</button>
+         </div>
+         {explainMsg&&<div className="soft" style={{marginBottom:10,color:'var(--primary-d)',fontWeight:600}}>{explainMsg}</div>}
+         {contents.length===0&&<div className="soft" style={{marginBottom:10}}>لا يوجد محتوى بعد — أضف نصاً أو ارفع ملفاً.</div>}
+         {contents.map(ct=>(
+           <div className="list-row" key={ct.id} style={{alignItems:'flex-start'}}>
+             <div className="roundico" style={{background:ct.is_ai_generated?'var(--accent-l)':'var(--primary-l)',color:ct.is_ai_generated?'var(--accent)':'var(--primary-d)'}}>{ct.is_ai_generated?Ico.brain:Ico.book}</div>
+             <div style={{flex:1}}>
+               <div style={{fontWeight:600}}>{ct.is_ai_generated?('شرح AI: '+(ct.ai_variant||'')):(ct.title||ct.kind)}</div>
+               {ct.body&&<div className="soft" style={{marginTop:4,lineHeight:1.9,whiteSpace:'pre-line'}}>{ct.body.slice(0,400)}{ct.body.length>400?'…':''}</div>}
+               {!ct.body&&<div className="soft">{ct.kind}{ct.extraction_status?' · فهرسة: '+ct.extraction_status:''}</div>}
+             </div>
+           </div>))}
+       </div>
+       <div className="card">
+         <div className="card-title">إضافة محتوى <span className="pill ai">يُغذّي الذكاء الاصطناعي</span></div>
+         <div className="field"><label>عنوان (اختياري)</label>
+           <input value={cTitle} onChange={e=>setCTitle(e.target.value)} placeholder="مثال: شرح الدرس"/></div>
+         <div className="field"><label>الصق نص الدرس (أفضل مسار للـ AI)</label>
+           <textarea value={cBody} onChange={e=>setCBody(e.target.value)} rows="5"
+             style={{width:'100%',padding:12,borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit',resize:'vertical'}}
+             placeholder="الصق هنا نص الدرس من الكتاب..."/></div>
+         <button className="btn" style={{width:'100%',justifyContent:'center',marginBottom:12}} disabled={busy} onClick={addText}>{Ico.plus} حفظ النص وفهرسته</button>
+         <div style={{textAlign:'center',color:'var(--muted)',fontSize:13,margin:'4px 0 12px'}}>— أو —</div>
+         <input ref={fileRef} type="file" onChange={uploadFile}
+           accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.mp4"
+           style={{width:'100%',padding:10,border:'1px dashed var(--line)',borderRadius:11,fontFamily:'inherit'}}/>
+         <div className="soft" style={{marginTop:8,fontSize:12}}>PDF / Word / PowerPoint / صور / فيديو</div>
+       </div>
+     </div>)}
+  </>);
+}
+
+/* ================ APP SHELL ================ */
+const MENUS={
+  super_admin:[['dash','الرئيسية',Ico.dash],['users','إدارة المستخدمين',Ico.users],['content','المحتوى التعليمي',Ico.book],['tests','الاختبارات',Ico.test],['reports','التقارير',Ico.chart],['notif','الإشعارات',Ico.bell]],
+  supervisor:[['dash','الرئيسية',Ico.dash],['content','جودة المحتوى',Ico.book],['reports','التقارير',Ico.chart],['notif','الإشعارات',Ico.bell]],
+  teacher:[['dash','الرئيسية',Ico.dash],['students','طلابي',Ico.grad],['content','دروسي',Ico.book],['tests','الاختبارات',Ico.test],['bank','بنك الأسئلة',Ico.brain]],
+  parent:[['dash','أبنائي',Ico.users],['reports','التقارير الذكية',Ico.chart],['tasks','المهام المنزلية',Ico.task],['notif','الإشعارات',Ico.bell]],
+  student:[['dash','مكتبتي',Ico.book],['lesson','الدرس الحالي',Ico.star],['tutor','المساعد الذكي',Ico.brain],['tests','اختباراتي',Ico.test],['tasks','واجباتي',Ico.task]],
+};
+const ROLE_AR={super_admin:'مدير النظام',supervisor:'مشرف تعليمي',teacher:'المعلم',parent:'ولي الأمر',student:'الطالب'};
+
+function App(){
+  const [acct,setAcct]=useState(null);     // {role, full_name, org_id, org_name}
+  const [counts,setCounts]=useState(null);
+  const [view,setView]=useState('dash');
+  const [open,setOpen]=useState(false);
+  const [loading,setLoading]=useState(true);
+
+  const loadCounts=async(orgId)=>{
+    const tabs=['students','parents','teachers','courses','lessons','assessments'];
+    const out={};
+    await Promise.all(tabs.map(async t=>{
+      const {count}=await sb.from(t).select('*',{count:'exact',head:true});
+      out[t]=count??0;
+    }));
+    setCounts(out);
+  };
+  const loadSession=async()=>{
+    if(!CONFIGURED){setLoading(false);return;}
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){setAcct(null);setLoading(false);return;}
+    const {data:acc}=await sb.from('accounts')
+      .select('role, full_name, org_id, organizations(name)').eq('id',session.user.id).single();
+    if(!acc){setAcct({role:null,email:session.user.email});setLoading(false);return;}
+    const a={id:session.user.id,role:acc.role,full_name:acc.full_name,org_id:acc.org_id,org_name:acc.organizations?.name};
+    setAcct(a);setLoading(false);
+    if(a.role==='super_admin'||a.role==='supervisor') loadCounts(a.org_id);
+  };
+  useEffect(()=>{loadSession();},[]);
+  const logout=async()=>{if(sb)await sb.auth.signOut();setAcct(null);setCounts(null);setView('dash');};
+
+  if(loading) return <div style={{height:'100vh',display:'grid',placeItems:'center',color:'var(--muted)',fontWeight:600}}>جارٍ التحميل...</div>;
+  if(!acct) return <Login onAuthed={()=>{setLoading(true);loadSession();}}/>;
+  if(!acct.role) return (
+    <div style={{height:'100vh',display:'grid',placeItems:'center',padding:24}}>
+      <div className="card" style={{maxWidth:460,textAlign:'center'}}>
+        <h2 style={{marginBottom:10}}>حسابك بلا صلاحية بعد</h2>
+        <p className="soft" style={{lineHeight:2,marginBottom:16}}>سجّلت الدخول بنجاح ({acct.email})، لكن لا يوجد صف مرتبط في جدول accounts. أضف صفاً في accounts بنفس معرّف المستخدم ودوره، ثم أعد الدخول.</p>
+        <button className="btn" style={{margin:'0 auto'}} onClick={logout}>{Ico.shield} تسجيل الخروج</button>
+      </div>
+    </div>);
+
+  const role=acct.role;
+  const menu=MENUS[role]||MENUS.student;
+  const go=v=>{setView(v);setOpen(false);};
+  const render=()=>{
+    if(view==='content'&&(role==='super_admin'||role==='supervisor'||role==='teacher'))
+      return <Library acct={acct}/>;
+    if(role==='super_admin') return <AdminDash counts={counts} orgName={acct.org_name}/>;
+    if(role==='supervisor') return <SupervisorDash/>;
+    if(role==='teacher') return <TeacherDash/>;
+    if(role==='parent') return <ParentDash/>;
+    if(role==='student'){
+      if(view==='lesson') return <LessonView/>;
+      if(view==='tutor') return <Tutor/>;
+      return <StudentDash go={go}/>;
+    }
+  };
+  return(
+   <div className="app">
+     <div className={"overlay"+(open?' show':'')} onClick={()=>setOpen(false)}/>
+     <aside className={"sidebar"+(open?' open':'')}>
+       <div className="brand"><span className="logo">فـ</span> فطن</div>
+       <div className="nav-sep">القائمة</div>
+       {menu.map(([k,l,ic])=>(
+         <button key={k} className={"nav-item"+(view===k?' active':'')} onClick={()=>go(k)}>{ic}{l}</button>))}
+       <div style={{marginTop:'auto'}}>
+         <div className="nav-sep">الحساب</div>
+         <button className="nav-item" onClick={logout}>{Ico.shield} تسجيل الخروج</button>
+       </div>
+     </aside>
+     <div className="main">
+       <div className="topbar">
+         <button className="icon-btn menu-btn" onClick={()=>setOpen(true)}>{Ico.menu}</button>
+         <div className="search">{Ico.search}<input placeholder="ابحث عن درس، طالب، اختبار..."/></div>
+         <div className="top-actions">
+           <button className="icon-btn">{Ico.bell}<span className="badge-dot"/></button>
+           <div style={{display:'flex',alignItems:'center',gap:10}}>
+             <div className="avatar">{(acct.full_name||ROLE_AR[role])[0]}</div>
+             <div style={{lineHeight:1.3}}><div style={{fontWeight:700,fontSize:14}}>{acct.full_name||ROLE_AR[role]}</div>
+               <div className="soft" style={{fontSize:12}}>{ROLE_AR[role]} · {acct.org_name||'مدرسة فطن'}</div></div>
+           </div>
+         </div>
+       </div>
+       <div className="content">{render()}</div>
+     </div>
+   </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
