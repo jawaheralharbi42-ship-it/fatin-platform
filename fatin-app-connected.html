@@ -1,0 +1,2589 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>فطن | منصة تعليمية ذكية</title>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="فطن"/>
+<meta name="theme-color" content="#0e9c8a"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f7fa; --surface:#ffffff; --ink:#15323a; --muted:#5b7079;
+    --primary:#0e8f86; --primary-d:#0a6e67; --primary-l:#e6f5f3;
+    --accent:#5b6ee1; --accent-l:#eceeffd9; --warn:#e7913b; --warn-l:#fdf0e0;
+    --danger:#df5a5a; --danger-l:#fde9e9; --ok:#3aa76d; --ok-l:#e6f5ec;
+    --line:#e6ecee; --shadow:0 6px 24px rgba(20,50,58,.07);
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--ink);direction:rtl}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  .app{display:flex;min-height:100vh}
+  /* Sidebar */
+  .sidebar{width:248px;background:var(--surface);border-left:1px solid var(--line);
+    display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh;flex-shrink:0}
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px;font-weight:800;font-size:22px}
+  .brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--accent));
+    display:grid;place-items:center;color:#fff;font-weight:800}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:12px;color:var(--muted);
+    font-weight:500;font-size:15px;margin-bottom:3px;transition:.15s;width:100%;text-align:right}
+  .nav-item:hover{background:var(--primary-l);color:var(--primary-d)}
+  .nav-item.active{background:var(--primary);color:#fff;box-shadow:var(--shadow)}
+  .nav-item .ico{width:20px;height:20px;flex-shrink:0}
+  .nav-sep{font-size:11px;color:#9fb0b6;font-weight:700;margin:14px 10px 6px}
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{height:64px;background:var(--surface);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:14px;padding:0 24px;position:sticky;top:0;z-index:20}
+  .search{flex:1;max-width:420px;display:flex;align-items:center;gap:9px;background:var(--bg);
+    border:1px solid var(--line);border-radius:11px;padding:9px 13px;color:var(--muted)}
+  .search input{border:none;background:none;outline:none;flex:1;font-family:inherit;font-size:14px;color:var(--ink)}
+  .top-actions{display:flex;align-items:center;gap:10px;margin-inline-start:auto}
+  .icon-btn{width:40px;height:40px;border-radius:11px;background:var(--bg);display:grid;place-items:center;
+    color:var(--muted);position:relative}
+  .icon-btn:hover{background:var(--primary-l);color:var(--primary-d)}
+  .badge-dot{position:absolute;top:8px;left:9px;width:8px;height:8px;border-radius:50%;background:var(--danger);border:2px solid var(--surface)}
+  .avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--primary));
+    color:#fff;display:grid;place-items:center;font-weight:700}
+  .content{padding:26px;flex:1;overflow:auto}
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px}
+  .page-head h1{font-size:24px;font-weight:800}
+  .page-head p{color:var(--muted);margin-top:4px;font-size:14px}
+  /* Cards */
+  .grid{display:grid;gap:16px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .kpi{display:flex;flex-direction:column;gap:8px}
+  .kpi .row{display:flex;align-items:center;justify-content:space-between}
+  .kpi .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center}
+  .kpi .val{font-size:28px;font-weight:800;line-height:1}
+  .kpi .lbl{color:var(--muted);font-size:14px;font-weight:500}
+  .kpi .chg{font-size:12px;font-weight:700;padding:3px 8px;border-radius:8px}
+  .up{background:var(--ok-l);color:var(--ok)} .down{background:var(--danger-l);color:var(--danger)}
+  .card-title{font-weight:700;font-size:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .pill{font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px}
+  .pill.ai{background:var(--accent-l);color:var(--accent)}
+  /* Bars chart */
+  .bars{display:flex;align-items:flex-end;gap:14px;height:170px;padding-top:8px}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end}
+  .bar{width:60%;border-radius:8px 8px 0 0;background:linear-gradient(180deg,var(--primary),var(--primary-d));transition:.4s}
+  .bar.alt{background:linear-gradient(180deg,var(--accent),#4655c9)}
+  .bar-lbl{font-size:12px;color:var(--muted);font-weight:500}
+  /* Donut */
+  .donut-wrap{display:flex;align-items:center;gap:20px}
+  .legend{display:flex;flex-direction:column;gap:9px;font-size:13px}
+  .legend .li{display:flex;align-items:center;gap:8px;color:var(--muted)}
+  .legend .sw{width:11px;height:11px;border-radius:3px}
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  th{text-align:right;font-size:12px;color:var(--muted);font-weight:700;padding:10px 12px;border-bottom:1px solid var(--line)}
+  td{padding:13px 12px;font-size:14px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  .tag{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px;display:inline-block}
+  .mini-av{width:32px;height:32px;border-radius:9px;background:var(--primary-l);color:var(--primary-d);
+    display:inline-grid;place-items:center;font-weight:700;font-size:13px;margin-left:8px;vertical-align:middle}
+  .btn{background:var(--primary);color:#fff;padding:10px 18px;border-radius:11px;font-weight:700;font-size:14px;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{background:var(--primary-d)} .btn.ghost{background:var(--primary-l);color:var(--primary-d)}
+  .btn.sm{padding:7px 13px;font-size:13px}
+  .progress{height:8px;border-radius:6px;background:var(--line);overflow:hidden}
+  .progress>span{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--primary),var(--accent))}
+  /* Login */
+  .login{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+  .login .hero{background:linear-gradient(150deg,var(--primary-d),var(--accent));color:#fff;
+    padding:60px;display:flex;flex-direction:column;justify-content:center;gap:22px;position:relative;overflow:hidden}
+  .login .hero h1{font-size:42px;font-weight:800;line-height:1.2}
+  .login .hero p{font-size:18px;opacity:.92;max-width:420px;line-height:1.8}
+  .hero .feat{display:flex;gap:12px;align-items:center;background:rgba(255,255,255,.13);
+    padding:13px 16px;border-radius:14px;backdrop-filter:blur(4px);font-weight:500}
+  .blob{position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
+  .login .form{display:flex;align-items:center;justify-content:center;padding:40px}
+  .form-box{width:100%;max-width:380px}
+  .form-box h2{font-size:26px;font-weight:800;margin-bottom:6px}
+  .form-box .sub{color:var(--muted);margin-bottom:26px}
+  .tabs{display:flex;background:var(--bg);border-radius:12px;padding:5px;margin-bottom:20px}
+  .tabs button{flex:1;padding:9px;border-radius:9px;font-weight:700;font-size:14px;color:var(--muted)}
+  .tabs button.on{background:var(--surface);color:var(--primary-d);box-shadow:var(--shadow)}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:var(--ink)}
+  .field input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;
+    font-family:inherit;font-size:14px;outline:none;background:var(--surface)}
+  .field input:focus{border-color:var(--primary)}
+  .role-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+  .role-pick button{padding:11px 6px;border:1.5px solid var(--line);border-radius:12px;font-weight:700;
+    font-size:13px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:6px}
+  .role-pick button.on{border-color:var(--primary);background:var(--primary-l);color:var(--primary-d)}
+  /* Lesson */
+  .lesson-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .lesson-tabs button{padding:9px 15px;border-radius:11px;background:var(--surface);border:1px solid var(--line);
+    font-weight:700;font-size:13px;color:var(--muted)}
+  .lesson-tabs button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .ai-box{background:linear-gradient(135deg,var(--accent-l),var(--primary-l));border:1px solid var(--line);
+    border-radius:14px;padding:18px;line-height:2;font-size:15px}
+  .chat{display:flex;flex-direction:column;gap:12px;max-height:340px;overflow:auto;padding:4px}
+  .msg{max-width:78%;padding:12px 15px;border-radius:14px;font-size:14px;line-height:1.8}
+  .msg.user{background:var(--primary);color:#fff;align-self:flex-start;border-bottom-right-radius:4px}
+  .msg.bot{background:var(--bg);align-self:flex-end;border-bottom-left-radius:4px}
+  .chat-input{display:flex;gap:8px;margin-top:14px}
+  .chat-input input{flex:1;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-family:inherit;outline:none}
+  .lib-card{position:relative;overflow:hidden}
+  .lib-cover{height:84px;border-radius:12px;margin-bottom:12px;display:grid;place-items:center;color:#fff;font-size:30px}
+  .soft{color:var(--muted);font-size:13px}
+  .list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .list-row:last-child{border-bottom:none}
+  .roundico{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0}
+  @media(max-width:1024px){.g4{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:1fr 1fr}}
+  @media(max-width:820px){
+    .sidebar{position:fixed;right:-260px;z-index:50;transition:.25s;box-shadow:var(--shadow)}
+    .sidebar.open{right:0}
+    .menu-btn{display:grid!important}
+    .login{grid-template-columns:1fr}.login .hero{display:none}
+    .g2,.g3,.g4{grid-template-columns:1fr}
+  }
+  .menu-btn{display:none}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:40}
+  .overlay.show{display:block}
+  @media print{
+    .sidebar,.topbar,.overlay,.btn{display:none !important}
+    .main{margin:0 !important}
+    .app{display:block !important}
+    .card{break-inside:avoid;box-shadow:none;border:1px solid #ddd}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect} = React;
+
+/* ============================================================
+   إعدادات الاتصال بـ Supabase — عدّل القيمتين التاليتين فقط
+   ضع رابط مشروعك والمفتاح العام (anon) من:
+   Supabase → Project Settings → API
+   ============================================================ */
+const SUPABASE_URL = "https://fhnbsongcnuknbakgcrg.supabase.co";   // رابط مشروعك
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZobmJzb25nY251a25iYWtnY3JnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzOTY1NjQsImV4cCI6MjA5NTk3MjU2NH0.wPq8hoBS683dvdhescVd_5RKGiHnYHfngripS14NJG0";   // مفتاح anon public
+
+const CONFIGURED = !SUPABASE_URL.includes("YOUR-PROJECT") && !SUPABASE_ANON_KEY.includes("YOUR-");
+const sb = CONFIGURED ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* ---------- tiny inline icons ---------- */
+const I = ({d,s=20})=>(<svg className="ico" width={s} height={s} viewBox="0 0 24 24" fill="none"
+  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d}</svg>);
+const Ico = {
+  dash:<I d={<><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></>}/>,
+  users:<I d={<><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></>}/>,
+  book:<I d={<><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>}/>,
+  brain:<I d={<><path d="M12 5a3 3 0 1 0-5.9.6"/><path d="M12 5a3 3 0 1 1 5.9.6"/><path d="M7 9a3 3 0 0 0 0 6"/><path d="M17 9a3 3 0 0 1 0 6"/><path d="M9 18a3 3 0 0 0 6 0"/><path d="M12 5v13"/></>}/>,
+  chart:<I d={<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>}/>,
+  bell:<I d={<><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>}/>,
+  test:<I d={<><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></>}/>,
+  task:<I d={<><path d="M9 11H3v10h6zM15 3H9v18h6zM21 7h-6v14h6z"/></>}/>,
+  search:<I d={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} s={18}/>,
+  send:<I d={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} s={18}/>,
+  plus:<I d={<><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>} s={16}/>,
+  mic:<I d={<><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></>} s={18}/>,
+  star:<I d={<polygon points="12 2 15 9 22 9 17 14 19 21 12 17 5 21 7 14 2 9 9 9"/>}/>,
+  grad:<I d={<><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2 3 6 3s6-2 6-3v-5"/></>}/>,
+  shield:<I d={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>}/>,
+  clip:<I d={<><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></>}/>,
+  menu:<I d={<><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></>}/>,
+};
+
+/* ================= LOGIN (مصادقة Supabase حقيقية) ================= */
+// تسمية الصفوف بالنظام السعودي (ابتدائي ١-٦، متوسط ١-٣، ثانوي ١-٣)
+const _ORD=['','الأول','الثاني','الثالث','الرابع','الخامس','السادس'];
+function gradeLabel(g){g=Number(g);
+  if(g>=1&&g<=6)return _ORD[g]+' الابتدائي';
+  if(g>=7&&g<=9)return _ORD[g-6]+' المتوسط';
+  if(g>=10&&g<=12)return _ORD[g-9]+' الثانوي';
+  return 'الصف '+g;}
+const ALL_GRADES=[1,2,3,4,5,6,7,8,9,10,11,12].map(g=>({g,label:gradeLabel(g)}));
+
+function Login({onAuthed,startSignup}){
+  const [tab,setTab]=useState('email');
+  const [mode,setMode]=useState(startSignup?'signup':'login');
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [err,setErr]=useState('');
+  const [msg,setMsg]=useState('');
+  const [phone,setPhone]=useState('');
+  const [otp,setOtp]=useState('');
+  const [otpSent,setOtpSent]=useState(false);
+
+  // تحويل رقم سعودي إلى صيغة دولية +9665xxxxxxxx
+  const fmtPhone=(p)=>{let s=String(p).replace(/[^0-9+]/g,'');
+    if(s.startsWith('+'))return s;
+    if(s.startsWith('00'))return '+'+s.slice(2);
+    if(s.startsWith('966'))return '+'+s;
+    if(s.startsWith('05'))return '+966'+s.slice(1);
+    if(s.startsWith('5'))return '+966'+s;
+    return '+'+s;};
+  const sendOtp=async()=>{
+    setErr('');setMsg('');
+    if(!CONFIGURED){setErr('اضبط إعدادات Supabase أولاً.');return;}
+    if(!phone.trim()){setErr('اكتب رقم جوالك.');return;}
+    setBusy(true);
+    const {error}=await sb.auth.signInWithOtp({phone:fmtPhone(phone)});
+    setBusy(false);
+    if(error){setErr('تعذّر الإرسال: '+error.message+' — قد يتطلب تفعيل مزوّد رسائل SMS في Supabase.');return;}
+    setOtpSent(true);setMsg('أرسلنا رمز التحقق إلى جوالك ('+fmtPhone(phone)+').');
+  };
+  const verifyPhone=async()=>{
+    setErr('');setMsg('');
+    if(!otp.trim()){setErr('اكتب رمز التحقق.');return;}
+    setBusy(true);
+    const {error}=await sb.auth.verifyOtp({phone:fmtPhone(phone),token:otp.trim(),type:'sms'});
+    setBusy(false);
+    if(error){setErr('رمز غير صحيح: '+error.message);return;}
+    onAuthed();
+  };
+
+  const doSignup=async()=>{
+    setErr('');setMsg('');
+    if(!CONFIGURED){setErr('اضبط إعدادات Supabase أولاً.');return;}
+    if(!email||!pass){setErr('اكتب البريد وكلمة المرور.');return;}
+    if(pass.length<6){setErr('كلمة المرور لازم ٦ أحرف على الأقل.');return;}
+    setBusy(true);
+    const {data,error}=await sb.auth.signUp({email:email.trim(),password:pass});
+    setBusy(false);
+    if(error){setErr('تعذّر إنشاء الحساب: '+error.message);return;}
+    if(data&&data.session){onAuthed();}
+    else{setMsg('تم إنشاء حسابك ✅ فعّل بريدك من رسالة التفعيل ثم سجّل الدخول.');setMode('login');}
+  };
+
+  const doLogin=async()=>{
+    setErr('');setMsg('');
+    if(!CONFIGURED){setErr('لم يُضبط رابط ومفتاح Supabase في أعلى الملف. عدّل SUPABASE_URL و SUPABASE_ANON_KEY.');return;}
+    if(tab==='phone'){setErr('دخول الجوال يتطلب تفعيل مزوّد رسائل SMS في Supabase. استخدم البريد حالياً.');return;}
+    if(!email||!pass){setErr('اكتب البريد وكلمة المرور.');return;}
+    setBusy(true);
+    const {error}=await sb.auth.signInWithPassword({email:email.trim(),password:pass});
+    setBusy(false);
+    if(error){setErr('تعذّر الدخول: '+error.message);return;}
+    onAuthed();
+  };
+  const reset=async()=>{
+    setErr('');setMsg('');
+    if(!CONFIGURED){setErr('اضبط إعدادات Supabase أولاً.');return;}
+    if(!email){setErr('اكتب بريدك أولاً ثم اضغط استعادة.');return;}
+    const {error}=await sb.auth.resetPasswordForEmail(email.trim());
+    setMsg(error?'تعذّر الإرسال: '+error.message:'تم إرسال رابط استعادة كلمة المرور إلى بريدك.');
+  };
+
+  return(
+   <div className="login">
+    <div className="hero">
+      <div className="blob" style={{width:260,height:260,top:-60,left:-40}}/>
+      <div className="blob" style={{width:180,height:180,bottom:40,right:-30}}/>
+      <div style={{display:'flex',alignItems:'center',gap:12,fontWeight:800,fontSize:26}}>
+        <span className="logo" style={{width:46,height:46,fontSize:20}}>فـ</span> فطن</div>
+      <h1>منصة تعليمية ذكية<br/>تبني المستقبل بالذكاء الاصطناعي</h1>
+      <p>شرح تفاعلي، تحليل أداء لحظي، توصيات علاجية، وربط متكامل بين الطالب وولي الأمر.</p>
+      <div style={{display:'flex',flexDirection:'column',gap:10,maxWidth:380}}>
+        <div className="feat">{Ico.brain} شرح الدروس وتوليد الأسئلة تلقائياً</div>
+        <div className="feat">{Ico.chart} تحليل ذكي لمستوى الطالب وخطط تقوية</div>
+        <div className="feat">{Ico.shield} نظام صلاحيات متقدم وحماية كاملة للبيانات</div>
+      </div>
+    </div>
+    <div className="form">
+      <div className="form-box">
+        <h2>{mode==='signup'?'إنشاء حساب طالب':'تسجيل الدخول'}</h2>
+        <p className="sub">{mode==='signup'?'أنشئ حسابك بالبريد وكلمة المرور، ثم عرّفنا على نفسك':'سجّل الدخول بحسابك — ويُحدَّد دورك تلقائياً من النظام'}</p>
+        {!CONFIGURED&&(
+          <div style={{background:'var(--warn-l)',color:'var(--warn)',padding:'11px 14px',borderRadius:11,
+            fontSize:13,fontWeight:600,marginBottom:16,lineHeight:1.7}}>
+            ⚙️ لم يُضبط الاتصال بعد. افتح الملف وعدّل SUPABASE_URL و SUPABASE_ANON_KEY في الأعلى.</div>)}
+        {tab==='email'?(<>
+          <div className="field"><label>البريد الإلكتروني</label>
+            <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="example@email.com" autoComplete="off" autoCorrect="off" autoCapitalize="off" name="fatin_login_email"/></div>
+          <div className="field"><label>كلمة المرور</label>
+            <input type="password" value={pass} onChange={e=>setPass(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&doLogin()} placeholder="••••••••" autoComplete="new-password" name="fatin_login_pass"/></div>
+        </>):(<>
+          <div className="field"><label>رقم الجوال</label><input placeholder="05xxxxxxxx"/></div>
+          <div className="field"><label>رمز التحقق OTP</label><input placeholder="٤ أرقام"/></div>
+        </>)}
+        {err&&<div style={{background:'var(--danger-l)',color:'var(--danger)',padding:'10px 13px',
+          borderRadius:10,fontSize:13,fontWeight:600,marginBottom:12}}>{err}</div>}
+        {msg&&<div style={{background:'var(--ok-l)',color:'var(--ok)',padding:'10px 13px',
+          borderRadius:10,fontSize:13,fontWeight:600,marginBottom:12}}>{msg}</div>}
+        <button className="btn" style={{width:'100%',justifyContent:'center',marginTop:6,opacity:busy?0.6:1}}
+          disabled={busy} onClick={mode==='signup'?doSignup:doLogin}>
+          {busy?'جارٍ المعالجة...':(mode==='signup'?'إنشاء الحساب':'تسجيل الدخول')}</button>
+        <p className="soft" style={{textAlign:'center',marginTop:16,cursor:'pointer',fontWeight:700,color:'var(--primary-d)'}}
+          onClick={()=>{setMode(mode==='signup'?'login':'signup');setErr('');setMsg('');}}>
+          {mode==='signup'?'لديك حساب؟ تسجيل الدخول':'طالب جديد؟ أنشئ حساباً'}</p>
+        {mode!=='signup'&&<p className="soft" style={{textAlign:'center',marginTop:8,cursor:'pointer'}} onClick={reset}>نسيت كلمة المرور؟</p>}
+      </div>
+    </div>
+   </div>);
+}
+
+/* ================ SHARED UI BITS ================ */
+const KPI=({icon,val,lbl,chg,up,tint})=>(
+  <div className="card kpi">
+    <div className="row">
+      <div className="ic" style={{background:tint[0],color:tint[1]}}>{icon}</div>
+      {chg&&<span className={"chg "+(up?'up':'down')}>{up?'▲':'▼'} {chg}</span>}
+    </div>
+    <div className="val">{val}</div><div className="lbl">{lbl}</div>
+  </div>);
+
+const Bars=({data,alt})=>{
+  const max=Math.max(...data.map(d=>d.v));
+  return(<div className="bars">{data.map((d,i)=>(
+    <div className="bar-col" key={i}>
+      <div className={"bar"+(alt&&i%2?' alt':'')} style={{height:(d.v/max*100)+'%'}}/>
+      <div className="bar-lbl">{d.l}</div>
+    </div>))}</div>);
+};
+
+const Donut=({segs})=>{
+  const tot=segs.reduce((a,b)=>a+b.v,0);let acc=0;const R=52,C=2*Math.PI*R;
+  return(<div className="donut-wrap">
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <circle cx="65" cy="65" r={R} fill="none" stroke="var(--line)" strokeWidth="16"/>
+      {segs.map((s,i)=>{const len=s.v/tot*C;const el=(
+        <circle key={i} cx="65" cy="65" r={R} fill="none" stroke={s.c} strokeWidth="16"
+          strokeDasharray={`${len} ${C-len}`} strokeDashoffset={-acc} transform="rotate(-90 65 65)"
+          strokeLinecap="round"/>);acc+=len;return el;})}
+      <text x="65" y="60" textAnchor="middle" fontSize="22" fontWeight="800" fill="var(--ink)">{tot}</text>
+      <text x="65" y="80" textAnchor="middle" fontSize="11" fill="var(--muted)">الإجمالي</text>
+    </svg>
+    <div className="legend">{segs.map((s,i)=>(
+      <div className="li" key={i}><span className="sw" style={{background:s.c}}/>{s.l} — {s.v}</div>))}</div>
+  </div>);
+};
+
+const PageHead=({title,sub,action})=>(
+  <div className="page-head"><div><h1>{title}</h1><p>{sub}</p></div>{action}</div>);
+
+/* ================ ADMIN DASHBOARD ================ */
+function AdminDash({counts,orgName}){
+  const v=(k,demo)=>counts? (counts[k]??0).toLocaleString('en') : demo;   // أرقام حقيقية إن توفرت
+  const [recent,setRecent]=useState([]);
+  useEffect(()=>{(async()=>{const{data}=await sb.from('accounts').select('full_name,role,status,created_at').order('created_at',{ascending:false}).limit(6);setRecent(data||[]);})();},[]);
+  const rar={super_admin:'مدير نظام',supervisor:'مشرف',parent:'ولي أمر',student:'طالب',teacher:'معلم'};
+  return(<>
+   <PageHead title="لوحة تحكم مدير النظام" sub={"نظرة شاملة على أداء المنصة — "+(orgName||"مدرسة فطن النموذجية")+(counts?" · بيانات مباشرة":"")}
+     action={<button className="btn">{Ico.plus} مستخدم جديد</button>}/>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.grad} val={v('students','1,248')} lbl="عدد الطلاب" chg="8%" up tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.users} val={v('parents','2,094')} lbl="أولياء الأمور" chg="5%" up tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.book} val={v('courses','6')} lbl="المواد" tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.test} val={v('assessments','412')} lbl="الاختبارات" chg="12%" up tint={['var(--warn-l)','var(--warn)']}/>
+   </div>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.book} val={v('lessons','3,560')} lbl="عدد الدروس" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.chart} val="78%" lbl="نسبة الإنجاز العامة" chg="4%" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.star} val="84.6" lbl="متوسط التحصيل" chg="1.2" up tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.brain} val="932" lbl="مستخدم نشط الآن" tint={['var(--accent-l)','var(--accent)']}/>
+   </div>
+   <div className="grid g3" style={{marginBottom:16}}>
+     <div className="card" style={{gridColumn:'span 2'}}>
+       <div className="card-title">متوسط التحصيل حسب المادة <span className="pill ai">آخر ٣٠ يوم</span></div>
+       <Bars alt data={[{l:'رياضيات',v:82},{l:'علوم',v:88},{l:'لغتي',v:79},{l:'إنجليزي',v:74},{l:'اجتماعيات',v:91},{l:'حاسب',v:86}]}/>
+     </div>
+     <div className="card">
+       <div className="card-title">توزيع المستخدمين</div>
+       <Donut segs={[{l:'طلاب',v:1248,c:'var(--primary)'},{l:'أولياء أمور',v:2094,c:'var(--accent)'}]}/>
+     </div>
+   </div>
+   <div className="grid g2">
+     <div className="card">
+       <div className="card-title">الجلسات التعليمية اليومية</div>
+       <Bars data={[{l:'سبت',v:540},{l:'أحد',v:880},{l:'إثنين',v:920},{l:'ثلاثاء',v:780},{l:'أربعاء',v:960},{l:'خميس',v:610}]}/>
+     </div>
+     <div className="card">
+       <div className="card-title">أحدث المستخدمين <button className="btn ghost sm">عرض الكل</button></div>
+       <table><thead><tr><th>المستخدم</th><th>الدور</th><th>التاريخ</th><th>الحالة</th></tr></thead>
+       <tbody>
+        {recent.map((r,i)=>(
+          <tr key={i}><td><span className="mini-av">{(r.full_name||'؟')[0]}</span>{r.full_name||'—'}</td>
+          <td className="soft">{rar[r.role]||r.role}</td>
+          <td className="soft">{new Date(r.created_at).toLocaleDateString('ar-SA')}</td>
+          <td><span className="tag" style={r.status==='active'?{background:'var(--ok-l)',color:'var(--ok)'}:{background:'var(--warn-l)',color:'var(--warn)'}}>{r.status==='active'?'نشط':'بانتظار'}</span></td></tr>))}
+        {recent.length===0&&<tr><td colSpan="4" className="soft">لا يوجد مستخدمون بعد.</td></tr>}
+       </tbody></table>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ STUDENT DASHBOARD ================ */
+function StudentDash({go}){
+  const subjects=[['الرياضيات','var(--primary)','∑',68],['العلوم','var(--accent)','⚛',84],
+    ['لغتي','var(--warn)','ﻝ',77],['الإنجليزية','#7a5bd1','En',71],['الاجتماعيات','var(--ok)','🗺',90],['الحاسب','#d1585b','</>',88]];
+  return(<>
+   <PageHead title="أهلاً سارة 👋" sub="جاهزة لمواصلة التعلّم اليوم؟ لديك درسان جديدان وواجب واحد"/>
+   <div className="grid g4" style={{marginBottom:18}}>
+     <KPI icon={Ico.book} val="٤ دروس" lbl="مكتملة هذا الأسبوع" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.test} val="92%" lbl="آخر اختبار — علوم" chg="ممتاز" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.star} val="١٬٢٤٠" lbl="نقاط الإنجاز" chg="120" up tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.brain} val="٧ أيام" lbl="سلسلة المواظبة 🔥" tint={['var(--accent-l)','var(--accent)']}/>
+   </div>
+   <div className="card-title" style={{fontSize:18}}>المكتبة التعليمية</div>
+   <div className="grid g3" style={{marginBottom:18}}>
+     {subjects.map((s,i)=>(
+       <div className="card lib-card" key={i} style={{cursor:'pointer'}} onClick={()=>i===0&&go('lesson')}>
+         <div className="lib-cover" style={{background:`linear-gradient(135deg,${s[1]},var(--primary-d))`}}>{s[2]}</div>
+         <div style={{fontWeight:700,fontSize:16,marginBottom:4}}>{s[0]}</div>
+         <div className="soft" style={{marginBottom:10}}>٦ وحدات · ٢٤ درس</div>
+         <div className="progress"><span style={{width:s[3]+'%'}}/></div>
+         <div className="soft" style={{marginTop:7}}>الإتقان {s[3]}%</div>
+       </div>))}
+   </div>
+   <div className="grid g2">
+     <div className="card">
+       <div className="card-title">المهام والواجبات</div>
+       {[['واجب الرياضيات — جمع الكسور','اليوم ٨ مساءً','var(--danger)'],
+         ['اختبار قصير — العلوم','غداً','var(--warn)'],
+         ['نشاط قراءة — لغتي','بعد يومين','var(--ok)']].map((t,i)=>(
+         <div className="list-row" key={i}>
+           <div className="roundico" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{Ico.task}</div>
+           <div style={{flex:1}}><div style={{fontWeight:600}}>{t[0]}</div><div className="soft">موعد التسليم: {t[1]}</div></div>
+           <span className="tag" style={{background:t[2]+'22',color:t[2]}}>قريب</span>
+         </div>))}
+     </div>
+     <div className="card" style={{background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))'}}>
+       <div className="card-title">المساعد الدراسي الذكي <span className="pill ai">{Ico.brain} AI</span></div>
+       <p style={{lineHeight:2,marginBottom:14}}>عندك سؤال صعب؟ اكتبه أو ارفع صورة/ملف وسأشرح لك خطوات الحل وأعطيك أسئلة مشابهة للتدريب.</p>
+       <button className="btn" onClick={()=>go('tutor')}>{Ico.send} افتح المساعد</button>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ LESSON + AI ================ */
+function LessonView(){
+  const [tab,setTab]=useState('explain');
+  const tabs=[['explain','الشرح النصي'],['simple','تبسيط حسب العمر'],['audio','الشرح الصوتي'],
+    ['examples','أمثلة عملية'],['practice','أسئلة تدريبية'],['quiz','اختبار قصير']];
+  const body={
+    explain:'جمع الأعداد الصحيحة يعني ضمّ كميتين. إذا كان للعددين الإشارة نفسها نجمع القيم ونحتفظ بالإشارة. وإذا اختلفت الإشارتان نطرح القيمة الأصغر من الأكبر ونأخذ إشارة الأكبر. مثال: (-3)+(5)=2 لأن 5 أكبر والإشارة موجبة.',
+    simple:'تخيّل أنك تملك ٥ ريالات (+5) وعليك دين ٣ ريالات (-3). كم يتبقى لك؟ يتبقى ٢ ريال! هذا هو جمع الأعداد الصحيحة ببساطة 😊',
+    audio:'🔊 جاري تشغيل الشرح الصوتي بصوت واضح ومناسب لعمرك... (٢:١٤ دقيقة) — يمكنك إعادة تشغيل النقاط الصعبة في أي وقت.',
+    examples:'مثال ١: (-7)+(2) = -5 · مثال ٢: (8)+(-8) = 0 · مثال ٣: (-4)+(-6) = -10 (نفس الإشارة فنجمع).',
+    practice:'١) ما ناتج (-9)+(4)؟  ٢) أكمل: (6)+(__)=0  ٣) صح أم خطأ: مجموع عددين سالبين يكون موجباً.',
+    quiz:'اختبار من ٥ أسئلة اختيار من متعدد ولّدها الذكاء الاصطناعي من هذا الدرس — الوقت ٧ دقائق.'};
+  return(<>
+   <PageHead title="جمع وطرح الأعداد الصحيحة" sub="الرياضيات · الوحدة الأولى: الأعداد الصحيحة · الصف الأول المتوسط"
+     action={<span className="pill ai">{Ico.brain} مُولّد ومُبسّط بالذكاء الاصطناعي</span>}/>
+   <div className="lesson-tabs">
+     {tabs.map(([k,l])=>(<button key={k} className={tab===k?'on':''} onClick={()=>setTab(k)}>{l}</button>))}
+   </div>
+   <div className="grid g3">
+     <div style={{gridColumn:'span 2',display:'flex',flexDirection:'column',gap:16}}>
+       <div className="card"><div className="ai-box">{body[tab]}</div>
+         <div style={{display:'flex',gap:8,marginTop:14,flexWrap:'wrap'}}>
+           <button className="btn ghost sm">{Ico.mic} استمع للشرح</button>
+           <button className="btn ghost sm">{Ico.brain} أعد شرح النقاط الصعبة</button>
+           <button className="btn ghost sm">{Ico.plus} ولّد أمثلة أكثر</button>
+         </div>
+       </div>
+       <div className="card">
+         <div className="card-title">أنواع الأسئلة المتاحة لهذا الدرس</div>
+         <div className="grid g3" style={{gap:10}}>
+           {[['اختيار متعدد',Ico.test],['صح وخطأ',Ico.clip],['مقالي',Ico.book],['ترتيب',Ico.chart],['سحب وإفلات',Ico.task],['واجب منزلي',Ico.task]].map((q,i)=>(
+             <div key={i} style={{background:'var(--bg)',borderRadius:12,padding:'14px 10px',textAlign:'center'}}>
+               <div style={{color:'var(--primary)',display:'grid',placeItems:'center',marginBottom:6}}>{q[1]}</div>
+               <div style={{fontSize:13,fontWeight:700}}>{q[0]}</div></div>))}
+         </div>
+       </div>
+     </div>
+     <div style={{display:'flex',flexDirection:'column',gap:16}}>
+       <div className="card">
+         <div className="card-title">تقدمك في الوحدة</div>
+         <Donut segs={[{l:'مكتمل',v:7,c:'var(--ok)'},{l:'متبقٍ',v:3,c:'var(--line)'}]}/>
+       </div>
+       <div className="card" style={{background:'var(--primary-l)'}}>
+         <div className="card-title">توصية ذكية</div>
+         <p style={{lineHeight:2,fontSize:14}}>لاحظ النظام تكرار خطأ في إشارات الطرح. أنشأنا لك ٣ تمارين علاجية إضافية.</p>
+         <button className="btn sm" style={{marginTop:10}}>ابدأ التمارين</button>
+       </div>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ AI TUTOR CHAT ================ */
+function Tutor(){
+  const [msgs,setMsgs]=useState([
+    {by:'bot',t:'أهلاً سارة! اكتب سؤالك أو ارفع صورة/ملف PDF وسأحلّه لك خطوة بخطوة.'},
+    {by:'user',t:'كيف أحل: (-3) + (5) ؟'},
+    {by:'bot',t:'بكل سرور 🌟\n١) لاحظي اختلاف الإشارتين (سالب وموجب).\n٢) اطرحي القيمة الأصغر من الأكبر: 5 − 3 = 2.\n٣) خذي إشارة العدد الأكبر (5 موجب) فالناتج = +2.\n\nسؤال مشابه للتدريب: ما ناتج (-8) + (6)؟'}]);
+  const [v,setV]=useState('');
+  const send=()=>{if(!v.trim())return;
+    setMsgs(m=>[...m,{by:'user',t:v},{by:'bot',t:'ممتاز! دعيني أحلّها خطوة بخطوة وأعطيكِ مثالاً إضافياً وسؤالين مشابهين للتدريب... ✨'}]);setV('');};
+  return(<>
+   <PageHead title="المساعد الدراسي الذكي" sub="حل الأسئلة · شرح الخطوات · توليد أسئلة مشابهة"
+     action={<span className="pill ai">{Ico.brain} GPT-4o</span>}/>
+   <div className="card" style={{maxWidth:760,margin:'0 auto'}}>
+     <div className="chat">
+       {msgs.map((m,i)=>(<div key={i} className={"msg "+m.by} style={{whiteSpace:'pre-line'}}>{m.t}</div>))}
+     </div>
+     <div className="chat-input">
+       <button className="icon-btn" title="رفع صورة/ملف">{Ico.plus}</button>
+       <input value={v} onChange={e=>setV(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
+         placeholder="اكتب سؤالك هنا..."/>
+       <button className="btn" onClick={send}>{Ico.send} إرسال</button>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ PARENT DASHBOARD ================ */
+function ParentDash(){
+  const [kids,setKids]=useState(null);
+  const [err,setErr]=useState('');
+  useEffect(()=>{(async()=>{
+    const{data,error}=await sb.functions.invoke('parent-children',{body:{}});
+    if(error||(data&&data.error)){setErr((data&&data.error)||error.message);setKids([]);return;}
+    setKids((data&&data.children)||[]);
+  })();},[]);
+  const gName=(g)=> g===6?'السادس الابتدائي':g===9?'الثالث المتوسط':('الصف '+ar(g));
+  const tone=(p)=> p>=80?['var(--ok-l)','var(--ok)']:p>=50?['var(--warn-l)','var(--warn)']:['var(--danger-l)','var(--danger)'];
+  const Stat=({val,lbl,t})=>(<div style={{background:t?t[0]:'var(--primary-l)',borderRadius:12,padding:'12px 10px',textAlign:'center'}}>
+    <div style={{fontSize:22,fontWeight:800,color:t?t[1]:'var(--primary-d)'}}>{val}</div>
+    <div className="soft" style={{fontSize:12}}>{lbl}</div></div>);
+  if(kids===null)return(<><PageHead title="متابعة الأبناء" sub="تابع تقدّم أبنائك ونقاط قوتهم وضعفهم"/>
+    <div className="card soft">جارٍ تحميل بيانات الأبناء...</div></>);
+  return(<>
+   <PageHead title="متابعة الأبناء" sub="تابع تقدّم أبنائك ونقاط قوتهم وضعفهم لحظة بلحظة"/>
+   {err&&<div className="card" style={{background:'var(--danger-l)',color:'var(--danger)',fontWeight:600}}>{err}</div>}
+   {kids.length===0&&!err&&<div className="card soft" style={{lineHeight:1.9}}>لا يوجد أبناء مرتبطون بحسابك بعد. اطلب من المشرف ربط ابنك بحسابك من صفحة «إدارة المستخدمين».</div>}
+   {kids.map((c,i)=>{const acc=c.accuracy,at=tone(acc);return(<div key={i} style={{marginBottom:22}}>
+     <div className="card" style={{marginBottom:14}}>
+       <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:16}}>
+         <div className="avatar" style={{width:50,height:50,borderRadius:15}}>{(c.name||'ط')[0]}</div>
+         <div><div style={{fontWeight:800,fontSize:18}}>{c.name}</div><div className="soft">{gName(c.grade)}</div></div>
+         <span className="tag" style={{marginInlineStart:'auto',background:at[0],color:at[1],fontWeight:800}}>الدقة {ar(acc)}%</span>
+       </div>
+       <div style={{padding:'10px 12px',borderRadius:12,background:'linear-gradient(135deg,var(--primary-l),var(--surface))',marginBottom:12}}>
+         <div style={{fontWeight:800,color:'var(--primary-d)',marginBottom:8}}>🔥 إنجاز اليوم</div>
+         <div className="grid g4" style={{gap:10}}>
+           <Stat val={ar(c.answeredToday||0)} lbl="سؤال اليوم"/>
+           <Stat val={ar(c.correctToday||0)} lbl="صحيحة اليوم" t={['var(--ok-l)','var(--ok)']}/>
+           <Stat val={ar(c.examsToday||0)} lbl="اختبار اليوم" t={['var(--accent-l)','var(--accent)']}/>
+           <Stat val={ar((c.answeredToday?Math.round((c.correctToday||0)/c.answeredToday*100):0))+'٪'} lbl="دقة اليوم" t={['var(--warn-l)','var(--warn)']}/>
+         </div>
+       </div>
+       <div style={{fontWeight:800,fontSize:13,color:'var(--muted)',margin:'2px 2px 8px'}}>📈 مجموع الإنجاز ({ar(c.activeDays||0)} يوم نشاط)</div>
+       <div className="grid g4" style={{gap:10}}>
+         <Stat val={ar(c.modelsSolved)} lbl="نماذج محلولة"/>
+         <Stat val={ar(c.totalAnswers)} lbl="إجابات"/>
+         <Stat val={ar(c.correct)} lbl="صحيحة" t={['var(--ok-l)','var(--ok)']}/>
+         <Stat val={ar(c.wrong)} lbl="أخطاء" t={['var(--danger-l)','var(--danger)']}/>
+       </div>
+     </div>
+     <div className="grid g2">
+       <div className="card">
+         <div className="card-title">المستوى حسب المادة</div>
+         {c.subjects.length===0&&<div className="soft">لم يبدأ الاختبارات بعد.</div>}
+         {c.subjects.map((s,j)=>{const t=tone(s.accuracy);return(<div key={j} style={{marginBottom:12}}>
+           <div style={{display:'flex',justifyContent:'space-between',fontWeight:700,marginBottom:5}}>
+             <span>{s.subject}</span><span style={{color:t[1]}}>{ar(s.accuracy)}%</span></div>
+           <div className="progress"><span style={{width:s.accuracy+'%',background:t[1]}}/></div>
+           <div className="soft" style={{fontSize:12,marginTop:3}}>{ar(s.correct)} صحيحة · {ar(s.wrong)} خطأ</div>
+         </div>);})}
+         {c.subjects.length>0&&<div style={{marginTop:6,padding:'9px 12px',borderRadius:10,background:'var(--danger-l)',color:'var(--danger)',fontWeight:700,fontSize:13}}>
+           🎯 يحتاج تقوية في: {c.subjects.filter(s=>s.accuracy<70).map(s=>s.subject).join('، ')||'لا يوجد — أداء ممتاز 🌟'}</div>}
+       </div>
+       <div className="card">
+         <div className="card-title">آخر الاختبارات</div>
+         {c.recent.length===0&&<div className="soft">لا توجد اختبارات محلولة بعد.</div>}
+         {c.recent.map((r,j)=>{const p=r.total?Math.round(r.score/r.total*100):0,t=tone(p);return(<div key={j} className="list-row">
+           <div className="roundico" style={{background:t[0],color:t[1]}}>{Ico.test}</div>
+           <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14}}>{r.subject} · {r.period}</div>
+             <div className="soft" style={{fontSize:12}}>{new Date(r.date).toLocaleDateString('ar-SA')}</div></div>
+           <span style={{fontWeight:800,color:t[1]}}>{ar(r.score)}/{ar(r.total)}</span>
+         </div>);})}
+       </div>
+     </div>
+     {c.mistakes.length>0&&<div className="card" style={{marginTop:14}}>
+       <div className="card-title">نقاط يحتاج مراجعتها ({ar(c.mistakes.length)})</div>
+       {c.mistakes.slice(0,8).map((m,j)=>(<div key={j} style={{padding:'9px 0',borderBottom:'1px solid var(--line)'}}>
+         <div style={{fontWeight:600}}><MathText text={m.stem}/></div>
+         <div className="soft" style={{fontSize:13,marginTop:3}}>الصحيحة: <MathText text={m.correct_text}/> {m.subject?('· '+m.subject):''}</div>
+       </div>))}
+     </div>}
+   </div>);})}
+  </>);
+}
+
+/* ================ TEACHER DASHBOARD ================ */
+function TeacherDash(){
+  return(<>
+   <PageHead title="لوحة المعلم" sub="إدارة الطلاب والدروس والاختبارات ومتابعة مخرجات الذكاء الاصطناعي"
+     action={<button className="btn">{Ico.plus} اختبار جديد بالـ AI</button>}/>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.grad} val="٣ فصول" lbl="١١٢ طالب" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.book} val="٢٤" lbl="درس منشور" tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.test} val="٩" lbl="اختبار بانتظار التصحيح" chg="جديد" tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.star} val="83%" lbl="متوسط أداء الطلاب" chg="3%" up tint={['var(--ok-l)','var(--ok)']}/>
+   </div>
+   <div className="grid g3">
+     <div className="card" style={{gridColumn:'span 2'}}>
+       <div className="card-title">أداء الطلاب — الصف أول/١ <button className="btn ghost sm">تصدير تقرير</button></div>
+       <table><thead><tr><th>الطالب</th><th>الإتقان</th><th>آخر اختبار</th><th>التوصية الذكية</th></tr></thead>
+       <tbody>
+        {[['سارة العتيبي',86,'92%','متابعة المسار'],['ريان الدوسري',64,'58%','خطة تقوية'],
+          ['نورة القحطاني',91,'95%','مسار متقدم'],['فهد الشهري',72,'70%','تمارين إضافية']].map((r,i)=>(
+          <tr key={i}><td><span className="mini-av">{r[0][0]}</span>{r[0]}</td>
+          <td><div style={{display:'flex',alignItems:'center',gap:8}}><div className="progress" style={{width:70}}><span style={{width:r[1]+'%'}}/></div>{r[1]}%</div></td>
+          <td className="soft">{r[2]}</td>
+          <td><span className="tag" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{r[3]}</span></td></tr>))}
+       </tbody></table>
+     </div>
+     <div className="card">
+       <div className="card-title">بنك الأسئلة <span className="pill ai">AI</span></div>
+       <p className="soft" style={{lineHeight:2,marginBottom:12}}>٤٨٠ سؤالاً مصنّفة حسب المادة والصف والوحدة والصعوبة.</p>
+       <Donut segs={[{l:'سهل',v:180,c:'var(--ok)'},{l:'متوسط',v:210,c:'var(--warn)'},{l:'صعب',v:90,c:'var(--danger)'}]}/>
+       <button className="btn sm" style={{marginTop:14,width:'100%',justifyContent:'center'}}>{Ico.plus} توليد أسئلة جديدة</button>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ SUPERVISOR DASHBOARD ================ */
+function SupervisorDash(){
+  return(<>
+   <PageHead title="لوحة المشرف التعليمي" sub="مراقبة المعلمين وجودة المحتوى واستخراج التقارير"/>
+   <div className="grid g4" style={{marginBottom:16}}>
+     <KPI icon={Ico.book} val="٨٦" lbl="معلم تحت الإشراف" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.test} val="٩٤%" lbl="جودة المحتوى" chg="2%" up tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.chart} val="٧٨%" lbl="متوسط إنجاز الفصول" tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.bell} val="٥" lbl="تنبيهات جودة" chg="انتباه" tint={['var(--warn-l)','var(--warn)']}/>
+   </div>
+   <div className="grid g2">
+     <div className="card">
+       <div className="card-title">أداء المعلمين</div>
+       <Bars alt data={[{l:'م. أحمد',v:88},{l:'م. منى',v:94},{l:'م. سعد',v:79},{l:'م. هند',v:91},{l:'م. علي',v:72}]}/>
+     </div>
+     <div className="card">
+       <div className="card-title">جودة المحتوى حسب المادة</div>
+       <table><thead><tr><th>المادة</th><th>دروس</th><th>تقييم AI</th><th>الحالة</th></tr></thead>
+       <tbody>{[['الرياضيات',420,'A','معتمد'],['العلوم',388,'A','معتمد'],['لغتي',360,'B','مراجعة'],['الإنجليزية',300,'B','مراجعة']].map((r,i)=>(
+         <tr key={i}><td>{r[0]}</td><td className="soft">{r[1]}</td><td><b>{r[2]}</b></td>
+         <td><span className="tag" style={r[3]==='معتمد'?{background:'var(--ok-l)',color:'var(--ok)'}:{background:'var(--warn-l)',color:'var(--warn)'}}>{r[3]}</span></td></tr>))}
+       </tbody></table>
+     </div>
+   </div>
+  </>);
+}
+
+/* ================ LIBRARY MANAGER (موصول بـ Supabase) ================ */
+const STAGES=[['primary','ابتدائي'],['intermediate','متوسط'],['secondary','ثانوي']];
+function Library({acct}){
+  const [courses,setCourses]=useState([]);
+  const [course,setCourse]=useState(null);
+  const [units,setUnits]=useState([]);
+  const [unit,setUnit]=useState(null);
+  const [cStats,setCStats]=useState(null);
+  const [lessons,setLessons]=useState([]);
+  const [lesson,setLesson]=useState(null);
+  const [contents,setContents]=useState([]);
+  const [msg,setMsg]=useState('');
+  const [busy,setBusy]=useState(false);
+  // نماذج الإدخال
+  const [cf,setCf]=useState({title:'',subject:'',stage:'intermediate',grade:7});
+  const [uTitle,setUTitle]=useState('');
+  const [lTitle,setLTitle]=useState('');
+  const [cTitle,setCTitle]=useState('');
+  const [cBody,setCBody]=useState('');
+  const fileRef=React.useRef();
+  const pdfRef=React.useRef();
+  const [importing,setImporting]=useState('');
+  const [exImporting,setExImporting]=useState('');
+  const [exMode,setExMode]=useState('mcq');// mcq | all | essay
+  const [exPeriod,setExPeriod]=useState('final');
+  const [exModel,setExModel]=useState(1);
+  const examPdfRef=React.useRef();
+  const [explaining,setExplaining]=useState(false);
+  const [explainMsg,setExplainMsg]=useState('');
+  const qpdfRef=React.useRef();
+  const [qGrade,setQGrade]=useState(6);
+  const [editId,setEditId]=useState(null);
+  const [eTitle,setETitle]=useState('');
+  const [eGrade,setEGrade]=useState(6);
+  const flash=(m)=>{setMsg(m);setTimeout(()=>setMsg(''),4000);};
+
+  // استخراج نص PDF داخل المتصفح بمكتبة pdf.js
+  const extractPdf=async(file)=>{
+    const pdfjs=window.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjs.getDocument({data:buf}).promise;
+    let text='';
+    for(let p=1;p<=pdf.numPages;p++){
+      setImporting(`جاري قراءة الصفحة ${p} من ${pdf.numPages}...`);
+      const page=await pdf.getPage(p);
+      const c=await page.getTextContent();
+      text+=c.items.map(i=>i.str).join(' ')+'\n';
+    }
+    return text;
+  };
+  // استيراد كتاب المادة كاملاً وتقسيمه تلقائياً
+  const importTextbook=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      setImporting('جاري استخراج نص الـ PDF...');
+      const text=await extractPdf(file);
+      if(!text.trim()){setImporting('');flash('تعذّر استخراج نص — قد يكون PDF صوراً ممسوحة');return;}
+      setImporting('الذكاء الاصطناعي يقسّم الكتاب إلى وحدات ودروس...');
+      const{data,error}=await sb.functions.invoke('split-textbook',{body:{course_id:course.id,text}});
+      setImporting('');if(pdfRef.current)pdfRef.current.value='';
+      if(error){flash('فشل التقسيم: '+(error.message||'تأكد من نشر دالة split-textbook ومفتاح OpenAI'));return;}
+      loadUnits(course);flash(`تم الاستيراد ✅ ${data?.units||0} وحدة و ${data?.lessons||0} درس`);
+    }catch(err){setImporting('');flash('خطأ: '+String(err));}
+  };
+
+  // عرض صفحات PDF كصور (للمستورد بالرؤية)
+  const renderPdfImages=async(file)=>{
+    const pdfjs=window.pdfjsLib;
+    pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjs.getDocument({data:buf}).promise;
+    const imgs=[];
+    for(let p=1;p<=pdf.numPages;p++){
+      setExImporting(`جاري تجهيز الصفحة ${p} من ${pdf.numPages}...`);
+      const page=await pdf.getPage(p);
+      const vp=page.getViewport({scale:1.6});
+      const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+      await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      imgs.push(c.toDataURL('image/jpeg',0.7));
+    }
+    return imgs;
+  };
+  // استيراد اختبار بالرؤية (يستخرج الأسئلة من صفحات ممسوحة)
+  const importExamVision=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      const imgs=await renderPdfImages(file);
+      let total=0;
+      for(let i=0;i<imgs.length;i++){
+        setExImporting(`الذكاء الاصطناعي يستخرج الأسئلة... صفحة ${i+1}/${imgs.length} (المُضاف: ${total})`);
+        const{data,error}=await sb.functions.invoke('import-exam-vision',{body:{course_id:course.id,exam_period:exPeriod,image:imgs[i],include_essay:exMode!=='mcq',essay_only:exMode==='essay'}});
+        if(!error&&data&&data.imported)total+=data.imported;
+      }
+      // ترتيب تلقائي: حذف المكرّر التام + تقسيم مبدئي
+      setExImporting('يرتّب الأسئلة في نماذج كاملة...');
+      await sb.rpc('renumber_exam_models',{p_course:course.id,p_period:exPeriod,p_size:30});
+      // توزيع بالمعنى: ما يجتمع سؤالان متشابهان في نفس النموذج
+      setExImporting('يوزّع الأسئلة بلا تكرار بالمعنى داخل النموذج...');
+      const{data:am}=await sb.functions.invoke('arrange-models',{body:{course_id:course.id,exam_period:exPeriod}});
+      setExImporting('');if(examPdfRef.current)examPdfRef.current.value='';
+      const pName=exPeriod==='final'?'النهائي':exPeriod==='period1'?'الفترة الأولى':exPeriod==='central'?'المركزي':'الفترة الثانية';
+      flash(`تم ✅ ${total} سؤال — نُظّفت وصُحّحت ووُلّدت أشكالها ورُتّبت في ${am?.models||0} نموذج بلا تكرار (${pName})`);loadCourseStats(course.id);
+    }catch(err){setExImporting('');flash('خطأ: '+String(err));}
+  };
+  // مراجعة وتصحيح الأسئلة بالذكاء (يصحّح الإجابات + يبسّط الشرح + يحذف التالف)
+  const polishExam=async()=>{
+    try{
+      let totalFixed=0,totalDel=0,guard=0;
+      while(guard++<30){
+        setExImporting(`الذكاء الاصطناعي يراجع الأسئلة ويصحّحها... (صُحِّح: ${totalFixed})`);
+        const{data,error}=await sb.functions.invoke('polish-exam',{body:{course_id:course.id,exam_period:exPeriod}});
+        if(error){flash('خطأ بالمراجعة: '+error.message);break;}
+        totalFixed+=data?.fixed||0;totalDel+=data?.deleted||0;
+        if(data?.done||(!data?.processed)){break;}
+      }
+      setExImporting('يعيد ترتيب النماذج بعد التصحيح...');
+      await sb.rpc('renumber_exam_models',{p_course:course.id,p_period:exPeriod,p_size:30});
+      setExImporting('يوزّع الأسئلة بلا تكرار بالمعنى داخل النموذج...');
+      const{data:am}=await sb.functions.invoke('arrange-models',{body:{course_id:course.id,exam_period:exPeriod}});
+      setExImporting('');
+      flash(`تمت المراجعة ✅ صُحِّح ${totalFixed} سؤال، حُذف ${totalDel} تالف، النماذج: ${am?.models||0} بلا تكرار بالمعنى`);loadCourseStats(course.id);
+    }catch(err){setExImporting('');flash('خطأ: '+String(err));}
+  };
+
+  // توزيع النماذج بلا تكرار بالمعنى (سريع — يستخدم المطابقة الدلالية فقط)
+  const arrangeModels=async()=>{
+    try{
+      setExImporting('يوزّع الأسئلة بلا تكرار بالمعنى داخل النموذج...');
+      const{data,error}=await sb.functions.invoke('arrange-models',{body:{course_id:course.id,exam_period:exPeriod}});
+      setExImporting('');
+      if(error){flash('خطأ بالتوزيع: '+error.message);return;}
+      flash(`تم التوزيع ✅ ${data?.models||0} نموذج بلا تكرار بالمعنى (${data?.questions||0} سؤال)`);loadCourseStats(course.id);
+    }catch(err){setExImporting('');flash('خطأ: '+String(err));}
+  };
+  // توليد الأشكال الهندسية للأسئلة التي تحتاج رسماً
+  const generateFigures=async()=>{
+    try{
+      let made=0,guard=0;
+      while(guard++<25){
+        setExImporting(`الذكاء يرسم الأشكال الهندسية... (تم: ${made})`);
+        const{data,error}=await sb.functions.invoke('generate-figures',{body:{course_id:course.id,exam_period:exPeriod}});
+        if(error){flash('خطأ بالتوليد: '+error.message);break;}
+        made+=data?.made||0;
+        if(data?.done||!data?.processed)break;
+      }
+      setExImporting('');
+      flash(`تم توليد ${made} شكل هندسي للأسئلة التي تحتاج رسماً`);loadCourseStats(course.id);
+    }catch(err){setExImporting('');flash('خطأ: '+String(err));}
+  };
+  // توليد الأشكال لكل فترات المادة بضغطة واحدة
+  const generateFiguresAll=async()=>{
+    try{
+      const periods=['final','central','period1','period2','practice'];let total=0;
+      for(const per of periods){
+        let guard=0;
+        while(guard++<25){
+          setExImporting(`الذكاء يرسم أشكال (${per})... (تم: ${total})`);
+          const{data,error}=await sb.functions.invoke('generate-figures',{body:{course_id:course.id,exam_period:per}});
+          if(error)break;
+          total+=data?.made||0;
+          if(data?.done||!data?.processed)break;
+        }
+      }
+      setExImporting('');
+      flash(`تم توليد ${total} شكل هندسي في كل فترات المادة`);loadCourseStats(course.id);
+    }catch(err){setExImporting('');flash('خطأ: '+String(err));}
+  };
+  // توليد أسئلة تدريبية مشابهة (نوع practice) من الفترة المختارة
+  const generateVariants=async()=>{
+    try{
+      const pN=exPeriod==='final'?'النهائي':exPeriod==='period1'?'الفترة الأولى':exPeriod==='period2'?'الفترة الثانية':exPeriod==='central'?'المركزي':'تدريبي';
+      let made=0,guard=0;
+      while(guard++<5){
+        setExImporting(`الذكاء يولّد أسئلة تدريبية مشابهة لأسئلة ${pN}... (تم: ${made})`);
+        const{data,error}=await sb.functions.invoke('generate-variants',{body:{course_id:course.id,source_period:exPeriod}});
+        if(error||(data&&data.error)){flash('تعذّر التوليد: '+((data&&data.error)||error.message));break;}
+        made+=data?.made||0;
+        if(!data?.made)break;
+      }
+      setExImporting('يوزّع أسئلة التدريب في نماذج...');
+      await sb.functions.invoke('arrange-models',{body:{course_id:course.id,exam_period:'practice'}});
+      setExImporting('');
+      flash(`تم توليد ${made} سؤال تدريبي مشابه (تظهر للطالب كـ«اختبار تدريبي»)`);loadCourseStats(course.id);
+    }catch(err){setExImporting('');flash('خطأ: '+String(err));}
+  };
+
+  const loadCourses=async()=>{const{data}=await sb.from('courses').select('*').order('created_at',{ascending:false});setCourses(data||[]);};
+  const loadUnits=async(c)=>{const{data}=await sb.from('units').select('*').eq('course_id',c.id).order('position');setUnits(data||[]);};
+  const loadLessons=async(u)=>{const{data}=await sb.from('lessons').select('*').eq('unit_id',u.id).order('position');setLessons(data||[]);};
+  const loadContents=async(l)=>{const{data}=await sb.from('lesson_contents').select('*').eq('lesson_id',l.id).order('created_at');setContents(data||[]);};
+  useEffect(()=>{loadCourses();},[]);
+
+  const stageOf=(g)=> g<=6?'primary':g<=9?'intermediate':'secondary';
+  const addCourse=async()=>{
+    if(!cf.title){flash('اكتب اسم المادة');return;}
+    setBusy(true);
+    const g=Number(cf.grade);
+    const{error}=await sb.from('courses').insert({org_id:acct.org_id,title:cf.title,
+      subject:cf.subject||cf.title,stage:stageOf(g),grade_level:g,term:Number(cf.term)||2,
+      is_published:true,created_by:acct.id});
+    setBusy(false);
+    if(error){flash('خطأ: '+error.message);return;}
+    setCf({title:'',subject:'',stage:'intermediate',grade:7,term:2});loadCourses();flash('تمت إضافة المادة ✅');
+  };
+  const loadCourseStats=async(cid)=>{
+    setCStats(null);
+    const{data}=await sb.from('questions').select('exam_period,model_no').eq('course_id',cid);
+    const map={};(data||[]).forEach(r=>{const p=r.exam_period||'other';map[p]=map[p]||{q:0,models:new Set()};map[p].q++;map[p].models.add(r.model_no||1);});
+    setCStats({period1:map.period1||{q:0,models:new Set()},period2:map.period2||{q:0,models:new Set()},final:map.final||{q:0,models:new Set()},central:map.central||{q:0,models:new Set()},practice:map.practice||{q:0,models:new Set()}});
+  };
+  const openCourse=(c)=>{setCourse(c);setUnit(null);setLesson(null);setLessons([]);setContents([]);loadUnits(c);loadCourseStats(c.id);};
+  const addUnit=async()=>{
+    if(!uTitle){flash('اكتب اسم الوحدة');return;}
+    const{error}=await sb.from('units').insert({org_id:acct.org_id,course_id:course.id,
+      title:uTitle,position:units.length+1});
+    if(error){flash('خطأ: '+error.message);return;}
+    setUTitle('');loadUnits(course);flash('تمت إضافة الوحدة ✅');
+  };
+  const openUnit=(u)=>{setUnit(u);setLesson(null);setContents([]);loadLessons(u);};
+  const addLesson=async()=>{
+    if(!lTitle){flash('اكتب اسم الدرس');return;}
+    const{error}=await sb.from('lessons').insert({org_id:acct.org_id,unit_id:unit.id,
+      course_id:course.id,title:lTitle,position:lessons.length+1,is_published:true});
+    if(error){flash('خطأ: '+error.message);return;}
+    setLTitle('');loadLessons(unit);flash('تمت إضافة الدرس ✅');
+  };
+  const openLesson=(l)=>{setLesson(l);loadContents(l);};
+
+  // إضافة محتوى نصي (أفضل مسار للذكاء الاصطناعي — يُفهرَس مباشرة)
+  const addText=async()=>{
+    if(!cBody.trim()){flash('الصق نص الدرس أولاً');return;}
+    setBusy(true);
+    const{data,error}=await sb.from('lesson_contents').insert({org_id:acct.org_id,
+      lesson_id:lesson.id,kind:'text',title:cTitle||'نص الدرس',body:cBody,is_ai_generated:false})
+      .select('id').single();
+    if(error){setBusy(false);flash('خطأ: '+error.message);return;}
+    // محاولة فهرسة المحتوى للذكاء الاصطناعي (تحتاج نشر دالة extract-content)
+    try{await sb.functions.invoke('extract-content',{body:{content_id:data.id,raw_text:cBody}});}catch(e){}
+    setBusy(false);setCTitle('');setCBody('');loadContents(lesson);flash('تم حفظ نص الدرس ✅');
+  };
+  // رفع ملف إلى التخزين
+  const uploadFile=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    setBusy(true);
+    const path=`${acct.org_id}/${lesson.id}/${Date.now()}_${file.name}`;
+    const{error:upErr}=await sb.storage.from('library').upload(path,file);
+    if(upErr){setBusy(false);flash('فشل الرفع: '+upErr.message);return;}
+    const ext=(file.name.split('.').pop()||'').toLowerCase();
+    const kind=ext==='pdf'?'pdf':['doc','docx'].includes(ext)?'word':['ppt','pptx'].includes(ext)?'pptx'
+      :['png','jpg','jpeg'].includes(ext)?'image':['mp4','mov'].includes(ext)?'video':'pdf';
+    const{error}=await sb.from('lesson_contents').insert({org_id:acct.org_id,lesson_id:lesson.id,
+      kind,title:file.name,storage_path:path,is_ai_generated:false});
+    setBusy(false);if(fileRef.current)fileRef.current.value='';
+    if(error){flash('خطأ بحفظ السجل: '+error.message);return;}
+    loadContents(lesson);flash('تم رفع الملف ✅');
+  };
+
+  // تعديل / حذف المادة
+  const startEdit=(c)=>{setEditId(c.id);setETitle(c.title);setEGrade(c.grade_level);};
+  const saveEdit=async(c)=>{
+    const grade=Number(eGrade);
+    const stage=grade<=6?'primary':grade<=9?'intermediate':'secondary';
+    const {error}=await sb.from('courses').update({title:eTitle,subject:eTitle,grade_level:grade,stage}).eq('id',c.id);
+    if(error){flash('خطأ بالتعديل: '+error.message);return;}
+    setEditId(null);loadCourses();flash('تم تعديل المادة ✅');
+  };
+  const deleteCourse=async(c)=>{
+    if(!confirm('حذف مادة «'+c.title+'» وكل وحداتها ودروسها ومحتواها؟ لا يمكن التراجع.'))return;
+    const {error}=await sb.from('courses').delete().eq('id',c.id);
+    if(error){flash('خطأ بالحذف: '+error.message);return;}
+    loadCourses();flash('تم حذف المادة 🗑');
+  };
+
+  // رفع سريع: ينشئ المادة باسم الملف ثم يقسّمها ويضيفها للمكتبة
+  const quickImport=async(e)=>{
+    const file=e.target.files[0];if(!file)return;
+    try{
+      const title=file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim();
+      const grade=Number(qGrade);
+      const stage=grade<=6?'primary':grade<=9?'intermediate':'secondary';
+      setImporting('إنشاء المادة: '+title+' ...');
+      const {data:course,error:cErr}=await sb.from('courses').insert({
+        org_id:acct.org_id,title,subject:title,stage,grade_level:grade,
+        is_published:true,created_by:acct.id}).select('id,title').single();
+      if(cErr){setImporting('');flash('خطأ بإنشاء المادة: '+cErr.message);return;}
+      setImporting('جاري استخراج نص الـ PDF...');
+      const text=await extractPdf(file);
+      if(!text.trim()){setImporting('');loadCourses();flash('المادة أُنشئت، لكن تعذّر استخراج النص (قد يكون PDF صوراً).');return;}
+      setImporting('الذكاء الاصطناعي يقسّم الكتاب إلى وحدات ودروس...');
+      const {data,error}=await sb.functions.invoke('split-textbook',{body:{course_id:course.id,text}});
+      setImporting('');if(qpdfRef.current)qpdfRef.current.value='';
+      if(error){loadCourses();flash('المادة أُنشئت لكن فشل التقسيم: '+(error.message||''));return;}
+      loadCourses();flash(`تم ✅ ${course.title}: ${data?.units||0} وحدة و ${data?.lessons||0} درس`);
+    }catch(err){setImporting('');flash('خطأ: '+String(err));}
+  };
+
+  // توليد شرح الدرس بالذكاء الاصطناعي (يستدعي دالة explain-lesson)
+  const doExplain=async()=>{
+    setExplaining(true);setExplainMsg('جاري توليد الشرح بالذكاء الاصطناعي...');
+    const {data,error}=await sb.functions.invoke('explain-lesson',{body:{lesson_id:lesson.id}});
+    setExplaining(false);
+    if(error){setExplainMsg('خطأ: '+(error.message||'تأكد من مفتاح OpenAI'));return;}
+    setExplainMsg(data&&data.cached?'الشرح كان محفوظاً مسبقاً ✅':'تم توليد الشرح بنجاح ✅');
+    loadContents(lesson);
+  };
+
+  const Crumb=()=>(
+    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:18,fontSize:14}}>
+      <button className="btn ghost sm" onClick={()=>{setCourse(null);setUnit(null);setLesson(null);}}>المكتبة</button>
+      {course&&<><span className="soft">/</span><button className="btn ghost sm" onClick={()=>openCourse(course)}>{course.title}</button></>}
+      {unit&&<><span className="soft">/</span><button className="btn ghost sm" onClick={()=>openUnit(unit)}>{unit.title}</button></>}
+      {lesson&&<><span className="soft">/</span><span style={{fontWeight:700}}>{lesson.title}</span></>}
+    </div>);
+
+  return(<>
+   <PageHead title="المكتبة التعليمية" sub="أضف المواد والوحدات والدروس وارفع المحتوى — والذكاء الاصطناعي يشرح ويولّد الأسئلة منه"
+     action={<span className="pill ai">{Ico.book} بيانات مباشرة</span>}/>
+   {msg&&<div className="card" style={{marginBottom:14,background:'var(--primary-l)',color:'var(--primary-d)',fontWeight:600}}>{msg}</div>}
+   <Crumb/>
+
+   {!course&&(<>
+     <div className="card" style={{marginBottom:16,background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))'}}>
+       <div className="card-title">رفع سريع: استيراد كتاب PDF تلقائياً <span className="pill ai">{Ico.brain} بضغطة واحدة</span></div>
+       <p className="soft" style={{lineHeight:1.9,marginBottom:12}}>اختر الصف وارفع ملف الكتاب — تُنشأ المادة باسم الملف تلقائياً، ثم يقسّمها الذكاء الاصطناعي لوحدات ودروس ويضيفها للمكتبة.</p>
+       <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap'}}>
+         <div className="field" style={{margin:0,minWidth:120}}><label>الصف</label>
+           <select value={qGrade} onChange={e=>setQGrade(e.target.value)}
+             style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+             {ALL_GRADES.map(x=><option key={x.g} value={x.g}>{x.label}</option>)}</select></div>
+         <div style={{flex:1,minWidth:200}}>
+           {importing
+             ? <div style={{fontWeight:700,color:'var(--primary-d)'}}>{importing}</div>
+             : <input ref={qpdfRef} type="file" accept=".pdf" onChange={quickImport}
+                 style={{width:'100%',padding:10,border:'1px dashed var(--primary)',borderRadius:11,fontFamily:'inherit',background:'var(--surface)'}}/>}
+         </div>
+       </div>
+     </div>
+     <div className="card" style={{marginBottom:16}}>
+       <div className="card-title">إضافة مادة جديدة يدوياً</div>
+       <div className="grid g4" style={{gap:10,alignItems:'end'}}>
+         <div className="field" style={{margin:0}}><label>اسم المادة</label>
+           <input value={cf.title} onChange={e=>setCf({...cf,title:e.target.value})} placeholder="مثال: الرياضيات"/></div>
+         <div className="field" style={{margin:0}}><label>الصف</label>
+           <select value={cf.grade} onChange={e=>setCf({...cf,grade:e.target.value})}
+             style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+             {ALL_GRADES.map(x=><option key={x.g} value={x.g}>{x.label}</option>)}</select></div>
+         <div className="field" style={{margin:0}}><label>الترم</label>
+           <select value={cf.term||2} onChange={e=>setCf({...cf,term:Number(e.target.value)})}
+             style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+             <option value={1}>الترم الأول</option><option value={2}>الترم الثاني</option></select></div>
+         <button className="btn" style={{justifyContent:'center'}} disabled={busy} onClick={addCourse}>{Ico.plus} إضافة</button>
+       </div>
+     </div>
+     <div className="grid g3">
+       {courses.length===0&&<div className="soft">لا توجد مواد بعد — أضف أول مادة من الأعلى.</div>}
+       {courses.map(c=>(
+         <div className="card lib-card" key={c.id}>
+           {editId===c.id?(
+             <div>
+               <div className="field"><label>اسم المادة</label>
+                 <input value={eTitle} onChange={e=>setETitle(e.target.value)}/></div>
+               <div className="field" style={{marginBottom:10}}><label>الصف</label>
+                 <select value={eGrade} onChange={e=>setEGrade(e.target.value)}
+                   style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+                   {ALL_GRADES.map(x=><option key={x.g} value={x.g}>{x.label}</option>)}</select></div>
+               <div style={{display:'flex',gap:8}}>
+                 <button className="btn sm" onClick={()=>saveEdit(c)}>حفظ</button>
+                 <button className="btn ghost sm" onClick={()=>setEditId(null)}>إلغاء</button>
+               </div>
+             </div>
+           ):(<>
+             <div className="lib-cover" style={{background:'linear-gradient(135deg,var(--primary),var(--primary-d))',cursor:'pointer'}} onClick={()=>openCourse(c)}>{c.title[0]}</div>
+             <div style={{fontWeight:700,fontSize:16,cursor:'pointer'}} onClick={()=>openCourse(c)}>{c.title}</div>
+             <div className="soft" style={{marginBottom:10}}>{STAGES.find(s=>s[0]===c.stage)?.[1]} · الصف {c.grade_level}</div>
+             <div style={{display:'flex',gap:8}}>
+               <button className="btn ghost sm" onClick={()=>startEdit(c)}>✏ تعديل</button>
+               <button className="btn sm" style={{background:'var(--danger-l)',color:'var(--danger)'}} onClick={()=>deleteCourse(c)}>🗑 حذف</button>
+             </div>
+           </>)}
+         </div>))}
+     </div>
+   </>)}
+
+   {course&&!unit&&(
+     <div className="card">
+       <div style={{border:'1px solid var(--line)',borderRadius:14,padding:16,marginBottom:16}}>
+         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+           <div style={{fontWeight:800}}>📊 ملخص أسئلة المادة <span className="soft" style={{fontWeight:600}}>({course.title})</span></div>
+           <button className="btn ghost sm" onClick={()=>loadCourseStats(course.id)}>تحديث</button>
+         </div>
+         {!cStats?<div className="soft">جارٍ الحساب...</div>:(
+           <div className="grid g3" style={{gap:10}}>
+             {[['period1','الفترة الأولى'],['period2','الفترة الثانية'],['final','النهائي'],['central','المركزي'],['practice','تدريبي']].map(([k,l])=>{
+               const st=cStats[k]||{q:0,models:new Set()};const m=st.models.size;const c=st.q>0?['var(--ok-l)','var(--ok)']:['var(--danger-l)','var(--danger)'];
+               return(<div key={k} style={{background:c[0],borderRadius:12,padding:'12px 14px'}}>
+                 <div style={{fontWeight:800,color:c[1],marginBottom:4}}>{l}</div>
+                 <div style={{fontSize:22,fontWeight:900,color:c[1]}}>{ar(st.q)} <span style={{fontSize:13,fontWeight:600}}>سؤال</span></div>
+                 <div className="soft" style={{fontSize:13}}>{ar(m)} نموذج {st.q===0?'· لم يُرفع بعد':''}</div>
+               </div>);})}
+           </div>)}
+       </div>
+       <div style={{background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))',borderRadius:14,padding:16,marginBottom:16}}>
+         <div style={{fontWeight:800,marginBottom:6}}>🤖 استيراد اختبار بالرؤية (نماذج تلقائية)</div>
+         <p className="soft" style={{lineHeight:1.9,marginBottom:12}}>ارفع ملف الاختبار الممسوح (PDF) واختر نوع الاختبار فقط — والنظام من أول مرة: يستخرج الأسئلة، يصحّح الإجابات، ينظّف النص، يولّد الأشكال الهندسية، يحذف المكرّر، ويوزّعها على نماذج كاملة تلقائياً.</p>
+         <div style={{display:'flex',gap:10,alignItems:'flex-end',flexWrap:'wrap'}}>
+           <div className="field" style={{margin:0,minWidth:150}}><label>الاختبار</label>
+             <select value={exPeriod} onChange={e=>setExPeriod(e.target.value)} style={{width:'100%',padding:'11px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+               <option value="final">النهائي</option><option value="period1">الفترة الأولى</option><option value="period2">الفترة الثانية</option><option value="central">الاختبار المركزي</option></select></div>
+           <div style={{flex:1,minWidth:180}}>
+             {exImporting? <div style={{fontWeight:700,color:'var(--primary-d)'}}>{exImporting}</div>
+               : <input ref={examPdfRef} type="file" accept=".pdf" onChange={importExamVision}
+                   style={{width:'100%',padding:10,border:'1px dashed var(--primary)',borderRadius:11,fontFamily:'inherit',background:'var(--surface)'}}/>}
+             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,flexWrap:'wrap'}}>
+               <span style={{fontWeight:600,fontSize:13}}>نوع الاستيراد:</span>
+               <select value={exMode} onChange={e=>setExMode(e.target.value)}
+                 style={{padding:'8px 10px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit',fontSize:13}}>
+                 <option value="mcq">اختياري وصح/خطأ فقط</option>
+                 <option value="all">الكل + المقالية</option>
+                 <option value="essay">المقالية فقط (تضاف للنماذج الحالية)</option>
+               </select>
+               <span className="soft" style={{fontSize:12}}>المقالية يجاوب عليها الطالب بالكيبورد أو القلم ويصحّحها الذكاء</span>
+             </div>
+           </div>
+         </div>
+         <div style={{marginTop:12,borderTop:'1px dashed var(--line)',paddingTop:12}}>
+           <div style={{fontWeight:700,marginBottom:4}}>🛠️ أدوات إضافية (اختيارية)</div>
+           <p className="soft" style={{lineHeight:1.8,marginBottom:8}}>الاستيراد ينجز كل شيء تلقائياً. استخدم هذه الأدوات فقط عند الحاجة لإعادة المعالجة على أسئلة قديمة.</p>
+           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+             <button className="btn" disabled={!!exImporting} onClick={polishExam}>🔍 راجِع وصحّح أسئلة {exPeriod==='final'?'النهائي':exPeriod==='period1'?'الفترة الأولى':exPeriod==='central'?'المركزي':'الفترة الثانية'}</button>
+             <button className="btn ghost" disabled={!!exImporting} onClick={arrangeModels}>🧩 إعادة توزيع بلا تكرار</button>
+             <button className="btn ghost" disabled={!!exImporting} onClick={generateFigures}>🔺 توليد أشكال هذه الفترة</button>
+             <button className="btn" disabled={!!exImporting} onClick={generateFiguresAll}>🔺 توليد أشكال كل الفترات</button>
+             <button className="btn ghost" disabled={!!exImporting} onClick={generateVariants}>🧪 توليد أسئلة تدريب مشابهة</button>
+           </div>
+         </div>
+       </div>
+       <div className="card-title">وحدات مادة: {course.title} <span className="pill ai">{Ico.brain} استيراد ذكي</span></div>
+       <div style={{background:'linear-gradient(135deg,var(--accent-l),var(--primary-l))',borderRadius:14,padding:16,marginBottom:16}}>
+         <div style={{fontWeight:700,marginBottom:6}}>استيراد كتاب المادة كاملاً (PDF)</div>
+         <p className="soft" style={{lineHeight:1.9,marginBottom:12}}>ارفع ملف الكتاب، والذكاء الاصطناعي يقسّمه تلقائياً إلى وحدات ودروس وينشئها مع المحتوى.</p>
+         {importing
+           ? <div style={{fontWeight:700,color:'var(--primary-d)'}}>{importing}</div>
+           : <input ref={pdfRef} type="file" accept=".pdf" onChange={importTextbook}
+               style={{width:'100%',padding:10,border:'1px dashed var(--primary)',borderRadius:11,fontFamily:'inherit',background:'var(--surface)'}}/>}
+       </div>
+       <div className="card-title" style={{fontSize:14}}>أو أضف وحدة يدوياً</div>
+       <div className="chat-input" style={{marginBottom:14,marginTop:0}}>
+         <input value={uTitle} onChange={e=>setUTitle(e.target.value)} placeholder="اسم الوحدة الجديدة"/>
+         <button className="btn" onClick={addUnit}>{Ico.plus} إضافة وحدة</button>
+       </div>
+       {units.length===0&&<div className="soft">لا توجد وحدات بعد.</div>}
+       {units.map(u=>(
+         <div className="list-row" key={u.id} style={{cursor:'pointer'}} onClick={()=>openUnit(u)}>
+           <div className="roundico" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{Ico.book}</div>
+           <div style={{flex:1,fontWeight:600}}>{u.title}</div><span className="soft">فتح ←</span></div>))}
+     </div>)}
+
+   {unit&&!lesson&&(
+     <div className="card">
+       <div className="card-title">دروس وحدة: {unit.title}</div>
+       <div className="chat-input" style={{marginBottom:14,marginTop:0}}>
+         <input value={lTitle} onChange={e=>setLTitle(e.target.value)} placeholder="اسم الدرس الجديد"/>
+         <button className="btn" onClick={addLesson}>{Ico.plus} إضافة درس</button>
+       </div>
+       {lessons.length===0&&<div className="soft">لا توجد دروس بعد.</div>}
+       {lessons.map(l=>(
+         <div className="list-row" key={l.id} style={{cursor:'pointer'}} onClick={()=>openLesson(l)}>
+           <div className="roundico" style={{background:'var(--accent-l)',color:'var(--accent)'}}>{Ico.star}</div>
+           <div style={{flex:1,fontWeight:600}}>{l.title}</div><span className="soft">المحتوى ←</span></div>))}
+     </div>)}
+
+   {lesson&&(
+     <div className="grid g2">
+       <div className="card">
+         <div className="card-title">محتوى الدرس الحالي
+           <button className="btn sm" disabled={explaining} onClick={doExplain}>{explaining?'...':'✨ ولّد الشرح'}</button>
+         </div>
+         {explainMsg&&<div className="soft" style={{marginBottom:10,color:'var(--primary-d)',fontWeight:600}}>{explainMsg}</div>}
+         {contents.length===0&&<div className="soft" style={{marginBottom:10}}>لا يوجد محتوى بعد — أضف نصاً أو ارفع ملفاً.</div>}
+         {contents.map(ct=>(
+           <div className="list-row" key={ct.id} style={{alignItems:'flex-start'}}>
+             <div className="roundico" style={{background:ct.is_ai_generated?'var(--accent-l)':'var(--primary-l)',color:ct.is_ai_generated?'var(--accent)':'var(--primary-d)'}}>{ct.is_ai_generated?Ico.brain:Ico.book}</div>
+             <div style={{flex:1}}>
+               <div style={{fontWeight:600}}>{ct.is_ai_generated?('شرح AI: '+(ct.ai_variant||'')):(ct.title||ct.kind)}</div>
+               {ct.body&&<div className="soft" style={{marginTop:4,lineHeight:1.9,whiteSpace:'pre-line'}}>{ct.body.slice(0,400)}{ct.body.length>400?'…':''}</div>}
+               {!ct.body&&<div className="soft">{ct.kind}{ct.extraction_status?' · فهرسة: '+ct.extraction_status:''}</div>}
+             </div>
+           </div>))}
+       </div>
+       <div className="card">
+         <div className="card-title">إضافة محتوى <span className="pill ai">يُغذّي الذكاء الاصطناعي</span></div>
+         <div className="field"><label>عنوان (اختياري)</label>
+           <input value={cTitle} onChange={e=>setCTitle(e.target.value)} placeholder="مثال: شرح الدرس"/></div>
+         <div className="field"><label>الصق نص الدرس (أفضل مسار للـ AI)</label>
+           <textarea value={cBody} onChange={e=>setCBody(e.target.value)} rows="5"
+             style={{width:'100%',padding:12,borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit',resize:'vertical'}}
+             placeholder="الصق هنا نص الدرس من الكتاب..."/></div>
+         <button className="btn" style={{width:'100%',justifyContent:'center',marginBottom:12}} disabled={busy} onClick={addText}>{Ico.plus} حفظ النص وفهرسته</button>
+         <div style={{textAlign:'center',color:'var(--muted)',fontSize:13,margin:'4px 0 12px'}}>— أو —</div>
+         <input ref={fileRef} type="file" onChange={uploadFile}
+           accept=".pdf,.doc,.docx,.ppt,.pptx,.png,.jpg,.jpeg,.mp4"
+           style={{width:'100%',padding:10,border:'1px dashed var(--line)',borderRadius:11,fontFamily:'inherit'}}/>
+         <div className="soft" style={{marginTop:8,fontSize:12}}>PDF / Word / PowerPoint / صور / فيديو</div>
+       </div>
+     </div>)}
+  </>);
+}
+
+/* ================ STUDENT EXPERIENCE (موصول — تجربة الطالب) ================ */
+// اختبار تفاعلي: يسحب أسئلة الدرس (أو يولّدها) ويصحّح إجابة الطالب فوراً
+// عرض الأرقام والكسور بشكل المنهج (أرقام عربية + كسر مكدّس)
+const ar=(s)=>String(s).replace(/[0-9]/g,d=>'٠١٢٣٤٥٦٧٨٩'[+d]);
+const Frac=({n,d})=>(<span style={{display:'inline-flex',flexDirection:'column',textAlign:'center',verticalAlign:'middle',margin:'0 3px',lineHeight:1.05}}>
+  <span style={{borderBottom:'1.6px solid currentColor',padding:'0 5px'}}>{ar(n)}</span>
+  <span style={{padding:'0 5px'}}>{ar(d)}</span></span>);
+function MathText({text}){
+  if(text==null)return null;
+  const s=String(text);const out=[];let last=0,m;
+  const re=/([0-9٠-٩]+)\s+([0-9٠-٩؟_□]+)\s*\/\s*([0-9٠-٩؟_□]+)|([0-9٠-٩؟_□]+)\s*\/\s*([0-9٠-٩؟_□]+)/g;
+  while((m=re.exec(s))){
+    if(m.index>last)out.push(ar(s.slice(last,m.index)));
+    if(m[1]!==undefined)out.push(<span key={m.index}>{ar(m[1])} <Frac n={m[2]} d={m[3]}/></span>);
+    else out.push(<Frac key={m.index} n={m[4]} d={m[5]}/>);
+    last=re.lastIndex;
+  }
+  out.push(ar(s.slice(last)));
+  return <>{out}</>;
+}
+
+// نطق نص عربي: Azure إن توفّر، وإلا صوت المتصفح
+async function speakAr(text,gender){
+  try{const{data}=await sb.functions.invoke('tts',{body:{text,gender:gender||'male'}});
+    if(data&&data.audio){const au=new Audio('data:audio/mpeg;base64,'+data.audio);au.play();return;}}catch(e){}
+  try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text));u.lang='ar-SA';u.rate=0.95;window.speechSynthesis.speak(u);}catch(e){}
+}
+// زر «ارجع افهم»: بطاقات شرح متتابعة لطريقة الحل (مع استماع)
+function ExplainMore({qid,gender}){
+  const [open,setOpen]=useState(false);
+  const [data,setData]=useState(null);
+  const [busy,setBusy]=useState(false);
+  const [shown,setShown]=useState(1);
+  const load=async()=>{
+    if(data){setOpen(o=>!o);return;}
+    setBusy(true);setOpen(true);
+    const{data:d,error}=await sb.functions.invoke('solve-steps',{body:{question_id:qid,gender:gender||'male'}});
+    setBusy(false);
+    if(error||(d&&d.error)){setData({error:(d&&d.error)||(error&&error.message)||'تعذّر'});return;}
+    setData(d);setShown(1);
+  };
+  const Card=({label,text,tint})=>(<div style={{background:tint||'var(--surface)',border:'1px solid var(--line)',borderRadius:12,padding:'12px 14px',marginTop:8}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+      <div style={{fontWeight:800,color:'var(--primary-d)'}}>{label}</div>
+      <button className="btn ghost sm" title="استماع" onClick={()=>speakAr(text,gender)}>🔊</button></div>
+    <div style={{marginTop:6,lineHeight:2}}><MathText text={text}/></div></div>);
+  const steps=(data&&data.steps)||[];
+  return(<div style={{marginTop:8}}>
+    <button className="btn ghost sm" disabled={busy} onClick={load}>{busy?'يجهّز طريقة الحل... ⏳':(open&&data?'إخفاء الشرح':'🔁 ارجع افهم')}</button>
+    {open&&data&&data.error&&<div style={{marginTop:8,color:'var(--danger)'}}>{data.error}</div>}
+    {open&&data&&!data.error&&<div>
+      {data.intro&&<Card label="الفكرة 💡" text={data.intro} tint="var(--accent-l)"/>}
+      {steps.slice(0,shown).map((s,i)=><Card key={i} label={'خطوة '+ar(i+1)} text={s.text}/>)}
+      {shown<steps.length&&<button className="btn sm" style={{marginTop:8}} onClick={()=>setShown(shown+1)}>الخطوة التالية ←</button>}
+      {shown>=steps.length&&data.answer&&<Card label="الإجابة الصحيحة ✅" text={data.answer} tint="var(--ok-l)"/>}
+    </div>}
+  </div>);
+}
+
+// معرّف الطالب الحالي (يُضبط عند تسجيل الدخول)
+let CURRENT_UID=null;
+// وضع المعاينة (المشرف يعاين تجربة الطالب) — لا يُحفظ شيء في الحساب
+let PREVIEW_MODE=false;
+// حفظ نتيجة كل إجابة في قاعدة البيانات (للوحة الطالب وقسم الأخطاء)
+async function recordAnswer(q, picked, correctKey, subject){
+  if(!CURRENT_UID||!sb||PREVIEW_MODE)return;
+  const correct=picked===correctKey;
+  const txt=(k)=>{ if(q.q_type==='true_false')return k==='true'?'صح':'خطأ'; const o=(q.options||[]).find(x=>x.key===k); return o?o.text:k; };
+  try{await sb.from('exam_answers').upsert({student_id:CURRENT_UID,question_id:q.id,course_id:q.course_id||null,
+    subject:subject||'',exam_period:q.exam_period||'',model_no:q.model_no||null,is_correct:correct,
+    picked,correct_text:txt(correctKey),stem:q.stem},{onConflict:'student_id,question_id'});}catch(e){}
+}
+// تسجيل إجابة سؤال مقالي بعد تصحيح الذكاء
+async function recordEssay(q, studentText, res, subject){
+  if(!CURRENT_UID||!sb||PREVIEW_MODE)return;
+  try{await sb.from('exam_answers').upsert({student_id:CURRENT_UID,question_id:q.id,course_id:q.course_id||null,
+    subject:subject||'',exam_period:q.exam_period||'',model_no:q.model_no||null,is_correct:!!res.is_correct,
+    picked:(studentText||'[إجابة بالقلم]').slice(0,2000),correct_text:(res.model_answer||'').slice(0,2000),stem:q.stem},{onConflict:'student_id,question_id'});}catch(e){}
+}
+// قراءة كل إجابات الطالب وتحويلها لنفس الشكل المستخدم في الواجهة
+const loadResults=async()=>{
+  if(!CURRENT_UID||!sb)return [];
+  const{data}=await sb.from('exam_answers').select('*').eq('student_id',CURRENT_UID);
+  return (data||[]).map(r=>({qid:r.question_id,stem:r.stem,subject:r.subject,period:r.exam_period,
+    correct:r.is_correct,correctText:r.correct_text}));
+};
+
+function LessonQuiz({lessonId,subject}){
+  const [qs,setQs]=useState(null);
+  const [picked,setPicked]=useState({});
+  const [busy,setBusy]=useState('جاري تحضير التدريب...');
+  const correctKey=(q)=>{
+    if(q.q_type==='true_false'){const ca=q.correct_answer;return (ca===true||ca==='true'||ca==='صح')?'true':'false';}
+    if(Array.isArray(q.options)){const o=q.options.find(x=>x.is_correct);if(o)return o.key;}
+    return typeof q.correct_answer==='string'?q.correct_answer:JSON.stringify(q.correct_answer);
+  };
+  const optsOf=(q)=> q.q_type==='true_false'
+    ? [{key:'true',text:'صح'},{key:'false',text:'خطأ'}] : (q.options||[]);
+  useEffect(()=>{(async()=>{
+    setBusy('جاري تحضير التدريب...');setPicked({});
+    let {data}=await sb.from('questions').select('*').eq('lesson_id',lessonId).in('q_type',['mcq','true_false']).limit(6);
+    if(!data||data.length===0){
+      setBusy('الذكاء الاصطناعي يولّد أسئلة من الدرس...');
+      const {error}=await sb.functions.invoke('generate-questions',{body:{lesson_id:lessonId,count:5,types:['mcq','true_false'],difficulty:'medium',save_to_bank:true}});
+      if(error){setBusy('تعذّر توليد الأسئلة: '+(error.message||''));return;}
+      const r=await sb.from('questions').select('*').eq('lesson_id',lessonId).in('q_type',['mcq','true_false']).limit(6);
+      data=r.data||[];
+    }
+    setQs(data);setBusy('');
+  })();},[lessonId]);
+  if(busy)return <div className="card" style={{fontWeight:600,color:'var(--primary-d)'}}>{busy}</div>;
+  if(!qs||qs.length===0)return <div className="card soft">لا توجد أسئلة لهذا الدرس.</div>;
+  const score=qs.filter(q=>picked[q.id]&&picked[q.id]===correctKey(q)).length;
+  const allDone=Object.keys(picked).length===qs.length;
+  return(<div>
+    {qs.map((q,i)=>{
+      const ck=correctKey(q),sel=picked[q.id],done=!!sel;
+      return(<div className="card" key={q.id} style={{marginBottom:14}}>
+        <div style={{fontWeight:700,marginBottom:12,fontSize:15}}>{ar(i+1)}. <MathText text={q.stem}/>{q.image_url&&<img src={q.image_url} alt="" style={{display:'block',maxWidth:'100%',maxHeight:260,borderRadius:10,margin:'10px 0'}}/>}{q.figure_svg&&<img src={'data:image/svg+xml;utf8,'+encodeURIComponent(q.figure_svg)} alt="شكل" style={{display:'block',maxWidth:240,height:'auto',margin:'10px 0'}}/>}</div>
+        <div style={{display:'flex',flexDirection:'column',gap:9}}>
+          {optsOf(q).map(o=>{
+            let bg='var(--bg)',col='var(--ink)',bd='var(--line)';
+            if(done&&o.key===ck){bg='var(--ok-l)';col='var(--ok)';bd='var(--ok)';}
+            else if(done&&o.key===sel){bg='var(--danger-l)';col='var(--danger)';bd='var(--danger)';}
+            return(<button key={o.key} disabled={done} onClick={()=>{setPicked(p=>({...p,[q.id]:o.key}));recordAnswer(q,o.key,ck,subject);}}
+              style={{textAlign:'right',padding:'13px 15px',borderRadius:12,border:'1.5px solid '+bd,background:bg,color:col,fontFamily:'inherit',fontWeight:600,fontSize:14,cursor:done?'default':'pointer'}}>
+              <MathText text={o.text}/>{done&&o.key===ck?'  ✅':''}{done&&o.key===sel&&o.key!==ck?'  ❌':''}</button>);
+          })}
+        </div>
+        {done&&(<div style={{marginTop:12,padding:'12px 15px',borderRadius:12,
+          background:sel===ck?'var(--ok-l)':'var(--danger-l)',lineHeight:2}}>
+          <div style={{fontWeight:800,color:sel===ck?'var(--ok)':'var(--danger)'}}>
+            {sel===ck?'إجابة صحيحة! 🎉':'إجابة غير صحيحة ❌'}</div>
+          {sel!==ck&&<div style={{marginTop:4}}>الإجابة الصحيحة: <b><MathText text={(optsOf(q).find(o=>o.key===ck)||{}).text||ck}/></b></div>}
+          {q.explanation&&<div style={{marginTop:4,color:'var(--muted)'}}>التفسير: <MathText text={q.explanation}/></div>}
+        </div>)}
+      </div>);
+    })}
+    {allDone&&(<div className="card" style={{textAlign:'center',background:'var(--primary-l)'}}>
+      <div style={{fontSize:20,fontWeight:800,color:'var(--primary-d)'}}>نتيجتك: {score} / {qs.length}</div>
+      <div className="soft" style={{marginTop:4}}>{score===qs.length?'ممتاز! أتقنت الدرس 🌟':'راجع النقاط التي أخطأت فيها وحاول مرة أخرى 💪'}</div>
+    </div>)}
+  </div>);
+}
+
+// اختبار المادة: يسحب أسئلة المادة ويصحّح ويُبرز نقاط الخطأ للتركيز
+const loadExams=async()=>{
+  if(!CURRENT_UID||!sb)return [];
+  const{data}=await sb.from('exam_runs').select('*').eq('student_id',CURRENT_UID);
+  return (data||[]).map(r=>({subject:r.subject,period:r.exam_period,model:r.model_no,score:r.score,total:r.total}));
+};
+// مساحة الكتابة بالقلم (للأجهزة اللمسية والآيباد)
+function PenPad({onChange}){
+  const ref=React.useRef(null);const drawing=React.useRef(false);const dirty=React.useRef(false);
+  React.useEffect(()=>{const c=ref.current;if(!c)return;const ctx=c.getContext('2d');
+    ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#0f172a';
+    const pos=(e)=>{const r=c.getBoundingClientRect();return {x:(e.clientX-r.left)*(c.width/r.width),y:(e.clientY-r.top)*(c.height/r.height)};};
+    const down=(e)=>{e.preventDefault();drawing.current=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);};
+    const move=(e)=>{if(!drawing.current)return;e.preventDefault();const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();dirty.current=true;};
+    const up=()=>{if(drawing.current){drawing.current=false;if(dirty.current&&onChange)onChange(c.toDataURL('image/png'));}};
+    c.addEventListener('pointerdown',down);c.addEventListener('pointermove',move);window.addEventListener('pointerup',up);
+    return ()=>{c.removeEventListener('pointerdown',down);c.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};
+  },[]);
+  const clear=()=>{const c=ref.current;if(!c)return;c.getContext('2d').clearRect(0,0,c.width,c.height);dirty.current=false;if(onChange)onChange('');};
+  return(<div>
+    <canvas ref={ref} width={640} height={200} style={{width:'100%',height:200,border:'1.5px dashed var(--primary)',borderRadius:12,background:'#fff',touchAction:'none',cursor:'crosshair'}}/>
+    <button className="btn ghost sm" type="button" onClick={clear} style={{marginTop:6}}>🧽 مسح والبدء من جديد</button>
+  </div>);
+}
+// إجابة سؤال مقالي: كيبورد أو قلم + تصحيح بالذكاء
+function EssayAnswer({q,gender,subject,allowExplain,onGraded}){
+  const [tab,setTab]=useState('type');const [text,setText]=useState('');const [img,setImg]=useState('');
+  const [busy,setBusy]=useState(false);const [res,setRes]=useState(null);
+  const submit=async()=>{
+    if(busy)return;
+    if(tab==='type'&&!text.trim()){alert('اكتب إجابتك أولاً');return;}
+    if(tab==='pen'&&!img){alert('اكتب إجابتك بالقلم أولاً');return;}
+    setBusy(true);
+    const body={question_id:q.id,gender};
+    if(tab==='pen')body.answer_image=img;else body.answer_text=text.trim();
+    const{data,error}=await sb.functions.invoke('grade-essay',{body});
+    setBusy(false);
+    if(error||(data&&data.error)){alert((data&&data.error)||error.message||'تعذّر التصحيح');return;}
+    setRes(data);recordEssay(q,tab==='pen'?'[إجابة بالقلم]':text.trim(),data,subject);
+    if(onGraded)onGraded(q.id,data);
+  };
+  if(res){const ok=res.verdict==='correct',partial=res.verdict==='partial';
+    const c=ok?['var(--ok-l)','var(--ok)']:partial?['var(--warn-l)','var(--warn)']:['var(--danger-l)','var(--danger)'];
+    return(<div style={{marginTop:10,padding:'13px 15px',borderRadius:12,background:c[0],lineHeight:2}}>
+      <div style={{fontWeight:800,color:c[1]}}>{ok?'إجابة صحيحة! 🎉':partial?('إجابة جزئية — '+(res.score_ar||'')+'٪ 👏'):'إجابة غير صحيحة ❌'}</div>
+      {res.read_text&&<div className="soft" style={{fontSize:13,marginTop:4}}>قرأتُ إجابتك: <MathText text={res.read_text}/></div>}
+      {res.feedback&&<div style={{marginTop:4}}><MathText text={res.feedback}/></div>}
+      {res.model_answer&&<div style={{marginTop:6}}>الحل النموذجي: <b><MathText text={res.model_answer}/></b></div>}
+      {allowExplain&&!ok&&<ExplainMore qid={q.id} gender={gender}/>}
+    </div>);
+  }
+  return(<div style={{marginTop:10}}>
+    <div style={{display:'flex',gap:8,marginBottom:8}}>
+      <button type="button" className={'btn '+(tab==='type'?'':'ghost')+' sm'} onClick={()=>setTab('type')}>⌨️ بالكيبورد</button>
+      <button type="button" className={'btn '+(tab==='pen'?'':'ghost')+' sm'} onClick={()=>setTab('pen')}>✍️ بالقلم</button>
+    </div>
+    {tab==='type'
+      ? <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="اكتب إجابتك هنا..." rows={4} style={{width:'100%',padding:12,borderRadius:12,border:'1.5px solid var(--line)',fontFamily:'inherit',fontSize:15,resize:'vertical',direction:'rtl'}}/>
+      : <PenPad onChange={setImg}/>}
+    <button className="btn" type="button" disabled={busy} onClick={submit} style={{marginTop:10,justifyContent:'center'}}>{busy?'يصحّح إجابتك... ⏳':'✓ صحّح إجابتي'}</button>
+  </div>);
+}
+// زر تبليغ الطالب عن خطأ في السؤال (يصل لبلاغات الأدمن)
+function ReportButton({q,subject}){
+  const [st,setSt]=useState('idle');
+  const send=async()=>{
+    const reason=window.prompt('وش الخطأ في السؤال؟ (اختياري — مثال: الإجابة غلط، رقم ناقص، السؤال غير واضح)','');
+    if(reason===null)return;
+    if(PREVIEW_MODE){setSt('done');return;}
+    try{await sb.from('question_reports').insert({question_id:q.id,reason:reason||null,subject:subject||'',exam_period:q.exam_period||'',model_no:q.model_no||null,stem:q.stem});setSt('done');}
+    catch(e){alert('تعذّر إرسال البلاغ، حاول مرة أخرى');}
+  };
+  if(st==='done')return <div style={{marginTop:12,fontSize:13,color:'var(--ok)',fontWeight:700}}>✓ تم إرسال بلاغك للمشرف، شكراً لك 🙏</div>;
+  return <div style={{marginTop:12,paddingTop:10,borderTop:'1px dashed var(--line)',textAlign:'center'}}>
+    <button type="button" onClick={send} style={{background:'var(--danger-l)',color:'var(--danger)',border:'1px solid var(--danger)',borderRadius:10,padding:'8px 14px',fontFamily:'inherit',fontWeight:700,fontSize:13,cursor:'pointer'}}>🚩 تبليغ عن خطأ في هذا السؤال</button>
+  </div>;
+}
+function CourseExam({course,period,model,onAnother,canAnother,gender,allowExplain,onGenerate,canGenerate,genBusy}){
+  const [qs,setQs]=useState(null);
+  const [picked,setPicked]=useState({});
+  const [essayRes,setEssayRes]=useState({});
+  const [busy,setBusy]=useState('جاري تحضير الاختبار...');
+  const [recorded,setRecorded]=useState(false);
+  const isEssay=(q)=> q.q_type==='essay'||q.q_type==='short_answer';
+  const isOk=(q)=> isEssay(q)?!!(essayRes[q.id]&&essayRes[q.id].is_correct):(picked[q.id]===ck(q));
+  const onGraded=(id,data)=>{setEssayRes(p=>({...p,[id]:data}));setPicked(p=>({...p,[id]:'__essay__'}));};
+  const ck=(q)=>{
+    if(q.q_type==='true_false'){const a=q.correct_answer;return (a===true||a==='true'||a==='صح')?'true':'false';}
+    if(Array.isArray(q.options)){const o=q.options.find(x=>x.is_correct);if(o)return o.key;}
+    return typeof q.correct_answer==='string'?q.correct_answer:JSON.stringify(q.correct_answer);
+  };
+  const optsOf=(q)=> q.q_type==='true_false'?[{key:'true',text:'صح'},{key:'false',text:'خطأ'}]:(q.options||[]);
+  useEffect(()=>{(async()=>{
+    setBusy('جاري تحضير الاختبار...');setPicked({});setRecorded(false);
+    let {data}=await sb.from('questions').select('*').eq('course_id',course.id).eq('exam_period',period).eq('model_no',model).in('q_type',['mcq','true_false','essay','short_answer']).order('created_at').limit(300);
+    if(!data||data.length===0){setBusy('لا توجد أسئلة لهذا النموذج بعد.');return;}
+    setQs(data);setBusy('');setEssayRes({});   // النموذج كامل بترتيبه
+  })();},[course.id,period,model]);
+  // تسجيل نموذج محلول عند إكمال كل الأسئلة
+  useEffect(()=>{
+    if(!recorded&&qs&&qs.length&&Object.keys(picked).length===qs.length){
+      setRecorded(true);
+      const sc=qs.filter(isOk).length;
+      if(CURRENT_UID&&sb&&!PREVIEW_MODE){sb.from('exam_runs').insert({student_id:CURRENT_UID,course_id:course.id,
+        subject:course.title,exam_period:period,model_no:model,score:sc,total:qs.length}).then(()=>{});}
+    }
+  },[picked,qs,recorded,essayRes]);
+  if(busy)return <div className="card" style={{fontWeight:600,color:'var(--primary-d)'}}>{busy}</div>;
+  if(!qs)return null;
+  const score=qs.filter(q=>picked[q.id]&&isOk(q)).length;
+  const allDone=Object.keys(picked).length===qs.length;
+  const wrong=qs.filter(q=>picked[q.id]&&!isOk(q));
+  return(<div>
+    {qs.map((q,i)=>{const k=ck(q),sel=picked[q.id],done=!!sel;
+      return(<div className="card" key={q.id} style={{marginBottom:14}}>
+        <div style={{fontWeight:700,marginBottom:12,fontSize:15}}>{ar(i+1)}. <MathText text={q.stem}/>{q.image_url&&<img src={q.image_url} alt="" style={{display:'block',maxWidth:'100%',maxHeight:260,borderRadius:10,margin:'10px 0'}}/>}{q.figure_svg&&<img src={'data:image/svg+xml;utf8,'+encodeURIComponent(q.figure_svg)} alt="شكل" style={{display:'block',maxWidth:240,height:'auto',margin:'10px 0'}}/>}</div>
+        {isEssay(q)?<EssayAnswer q={q} gender={gender} subject={course.title} allowExplain={allowExplain} onGraded={onGraded}/>:
+        <><div style={{display:'flex',flexDirection:'column',gap:9}}>
+          {optsOf(q).map(o=>{let bg='var(--bg)',col='var(--ink)',bd='var(--line)';
+            if(done&&o.key===k){bg='var(--ok-l)';col='var(--ok)';bd='var(--ok)';}
+            else if(done&&o.key===sel){bg='var(--danger-l)';col='var(--danger)';bd='var(--danger)';}
+            return(<button key={o.key} disabled={done} onClick={()=>{setPicked(p=>({...p,[q.id]:o.key}));recordAnswer(q,o.key,k,course.title);}}
+              style={{textAlign:'right',padding:'13px 15px',borderRadius:12,border:'1.5px solid '+bd,background:bg,color:col,fontFamily:'inherit',fontWeight:600,fontSize:14,cursor:done?'default':'pointer'}}>
+              <MathText text={o.text}/>{done&&o.key===k?'  ✅':''}{done&&o.key===sel&&o.key!==k?'  ❌':''}</button>);})}
+        </div>
+        {done&&(<div style={{marginTop:12,padding:'12px 15px',borderRadius:12,background:sel===k?'var(--ok-l)':'var(--danger-l)',lineHeight:2}}>
+          <div style={{fontWeight:800,color:sel===k?'var(--ok)':'var(--danger)'}}>{sel===k?'إجابة صحيحة! 🎉':'إجابة غير صحيحة ❌'}</div>
+          {sel!==k&&<div style={{marginTop:4}}>الصحيحة: <b><MathText text={(optsOf(q).find(o=>o.key===k)||{}).text||k}/></b></div>}
+          {q.explanation&&<div style={{marginTop:4,color:'var(--muted)'}}>التفسير: <MathText text={q.explanation}/></div>}
+          {allowExplain&&sel!==k&&<ExplainMore qid={q.id} gender={gender}/>}
+        </div>)}
+        </>}
+        <ReportButton q={q} subject={course.title}/>
+      </div>);})}
+    {allDone&&(<div className="card" style={{background:'var(--primary-l)'}}>
+      <div style={{fontSize:20,fontWeight:800,color:'var(--primary-d)',textAlign:'center'}}>نتيجتك: {score} / {qs.length}</div>
+      {wrong.length>0?(<div style={{marginTop:14}}>
+        <div style={{fontWeight:800,color:'var(--danger)',marginBottom:6}}>🎯 ركّز على هذي النقاط</div>
+        <ul style={{paddingInlineStart:20,lineHeight:2.1}}>{wrong.map(q=><li key={q.id}><MathText text={q.stem}/></li>)}</ul>
+      </div>):<div className="soft" style={{textAlign:'center',marginTop:6}}>ممتاز! جاهز للاختبار 🌟</div>}
+      {canAnother&&<div style={{textAlign:'center',marginTop:16}}>
+        <button className="btn" onClick={onAnother}>🔄 جرّب نموذجاً آخر</button></div>}
+      {canGenerate&&<div style={{textAlign:'center',marginTop:12}}>
+        <button className="btn" style={{background:'var(--accent)',color:'#3a2a08'}} disabled={genBusy} onClick={onGenerate}>
+          {genBusy?'يجهّز أسئلة جديدة لك... ⏳':'🧪 ولّد لي أسئلة جديدة وتدرّب أكثر'}</button>
+        <div className="soft" style={{fontSize:12,marginTop:6}}>أسئلة مشابهة جديدة لتتدرّب أكثر قبل اختبارك</div></div>}
+    </div>)}
+  </div>);
+}
+
+// اختيار نموذج الاختبار (نموذج ١، ٢، ...)
+function ModelPicker({course,period,onPick}){
+  const [models,setModels]=useState(null);
+  useEffect(()=>{(async()=>{
+    const {data}=await sb.from('questions').select('model_no').eq('course_id',course.id).eq('exam_period',period);
+    const set=[...new Set((data||[]).map(r=>r.model_no||1))].sort((a,b)=>a-b).slice(0,5);
+    setModels(set);
+  })();},[course.id,period]);
+  if(!models)return <div className="card soft">جاري التحميل...</div>;
+  if(models.length===0)return <div className="card soft">لا توجد نماذج بعد لهذا الاختبار.</div>;
+  return(<div className="grid g3">
+    {models.map(m=>(<div className="card lib-card" key={m} style={{cursor:'pointer',textAlign:'center',padding:26}} onClick={()=>onPick(m)}>
+      <div style={{fontSize:36}}>📄</div><div style={{fontWeight:800,fontSize:18,marginTop:8}}>النموذج {ar(m)}</div>
+      <div className="soft" style={{marginTop:4}}>اختبار كامل</div></div>))}
+  </div>);
+}
+
+function StudentExperience({acct,nav,preview}){
+  useEffect(()=>{PREVIEW_MODE=!!preview;return ()=>{PREVIEW_MODE=false;};},[preview]);
+  const [profile,setProfile]=useState(null);
+  const [profileLoaded,setProfileLoaded]=useState(false);
+  const [settings,setSettings]=useState(null);
+  const [results,setResults]=useState([]);
+  const [exams,setExams]=useState([]);
+  const [term,setTerm]=useState(null);
+  const [mode,setMode]=useState(null);
+  const [exam,setExam]=useState(null);
+  const [examModel,setExamModel]=useState(null);
+  const [availModels,setAvailModels]=useState([]);
+  const [view,setView]=useState('home');
+  const [tick,setTick]=useState(0);
+  const [courses,setCourses]=useState([]);
+  const [course,setCourse]=useState(null);
+  const [lessons,setLessons]=useState([]);
+  const [lesson,setLesson]=useState(null);
+  const [variants,setVariants]=useState(null);
+  const [busy,setBusy]=useState('');
+  const [readTab,setReadTab]=useState('explanation');
+  const [speaking,setSpeaking]=useState(false);
+  const [extra,setExtra]=useState('');
+  const [extraBusy,setExtraBusy]=useState(false);
+  const [fName,setFName]=useState('');const [fGender,setFGender]=useState('male');const [fGrade,setFGrade]=useState(6);const [fTerm,setFTerm]=useState(2);
+  // مزامنة التنقّل مع القائمة الجانبية (لوحتي/موادي/أخطائي)
+  useEffect(()=>{
+    const map={dash:'dash',subjects:'home',mistakes:'mistakes',challenge:'challenge',writing:'writing'};
+    const v=map[nav]||'dash';
+    setView(v);
+    if(nav==='subjects'){setMode(null);setCourse(null);setExam(null);setExamModel(null);setLesson(null);}
+  },[nav]);
+  const gradeName=(g)=>gradeLabel(g);
+  const termName=(t)=> t===1?'الترم الأول':'الترم الثاني';
+  const examLabel=(p)=> p==='period1'?'اختبار الفترة الأولى':p==='period2'?'اختبار الفترة الثانية':p==='central'?'الاختبار المركزي':p==='practice'?'اختبار تدريبي':'الاختبار النهائي';
+  const gen=(profile&&profile.gender)||'male';
+  // تحميل ملف الطالب من قاعدة البيانات
+  useEffect(()=>{(async()=>{
+    if(!sb||!CURRENT_UID){setProfileLoaded(true);return;}
+    const{data:st}=await sb.from('app_settings').select('active_terms,allow_explain,allow_lessons').limit(1).maybeSingle();
+    setSettings(st||{active_terms:[2],allow_explain:true,allow_lessons:true});
+    // وضع المعاينة: ندخل مباشرة بملف طالب تجريبي (بدون شاشة تسجيل) لرؤية الاختبارات
+    if(preview){
+      const t=(st&&st.active_terms&&st.active_terms.length?st.active_terms[st.active_terms.length-1]:2);
+      setProfile({name:'معاينة الطالب',gender:'male',grade:6,term:t,can_explain:true,can_lessons:true});
+      setTerm(t);setProfileLoaded(true);return;
+    }
+    const{data}=await sb.from('students').select('grade_level,gender,term,can_explain,can_lessons').eq('account_id',CURRENT_UID).maybeSingle();
+    if(data&&data.grade_level){
+      const p={name:acct&&acct.full_name||'طالب',gender:data.gender||'male',grade:data.grade_level,term:data.term||2,
+        can_explain:data.can_explain!==false,can_lessons:data.can_lessons!==false};
+      setProfile(p);setTerm(p.term);
+    }
+    setProfileLoaded(true);
+  })();},[]);
+  const ST=settings||{active_terms:[2],allow_explain:true,allow_lessons:true};
+  const explainOn=(ST.allow_explain!==false)&&(!profile||profile.can_explain!==false);
+  const lessonsOn=(ST.allow_lessons!==false)&&(!profile||profile.can_lessons!==false);
+  const activeTerms=(ST.active_terms&&ST.active_terms.length)?ST.active_terms:[2];
+  // شريط المعاينة: المشرف يبدّل الصف/الترم/الجنس ويتنقّل لرؤية الاختبارات كما يراها الطالب
+  const resetNav=()=>{setMode(null);setCourse(null);setExam(null);setExamModel(null);setLesson(null);};
+  const previewBar = preview?(<div className="card" style={{marginBottom:14,background:'var(--warn-l)',display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+    <span style={{fontWeight:800,color:'var(--warn)'}}>👁️ معاينة الطالب</span>
+    <span className="soft" style={{fontSize:13}}>تجربة كما يراها الطالب — لا يُحفظ شيء</span>
+    <div style={{marginInlineStart:'auto',display:'flex',gap:8,flexWrap:'wrap'}}>
+      <select value={profile?profile.grade:6} onChange={e=>{const g=Number(e.target.value);setProfile(p=>({...p,grade:g}));resetNav();}}
+        style={{padding:'7px 10px',borderRadius:9,border:'1px solid var(--line)',fontFamily:'inherit',fontSize:13}}>
+        <option value={6}>السادس الابتدائي</option><option value={9}>الثالث المتوسط</option></select>
+      <select value={profile?profile.term:2} onChange={e=>{const t=Number(e.target.value);setProfile(p=>({...p,term:t}));setTerm(t);resetNav();}}
+        style={{padding:'7px 10px',borderRadius:9,border:'1px solid var(--line)',fontFamily:'inherit',fontSize:13}}>
+        <option value={1}>الترم الأول</option><option value={2}>الترم الثاني</option></select>
+      <select value={profile?profile.gender:'male'} onChange={e=>setProfile(p=>({...p,gender:e.target.value}))}
+        style={{padding:'7px 10px',borderRadius:9,border:'1px solid var(--line)',fontFamily:'inherit',fontSize:13}}>
+        <option value="male">طالب</option><option value="female">طالبة</option></select>
+    </div>
+  </div>):null;
+  // تحميل النتائج والنماذج المحلولة من قاعدة البيانات
+  const reloadStats=async()=>{setResults(await loadResults());setExams(await loadExams());};
+  useEffect(()=>{if(profile)reloadStats();},[profile,view,examModel]);
+  // إنجاز الطالب اليومي والإجمالي
+  const [ach,setAch]=useState(null);
+  const reloadAch=async()=>{try{const{data}=await sb.rpc('student_achievement',{p_student:CURRENT_UID});if(data&&data.length)setAch(data[0]);}catch(e){}};
+  useEffect(()=>{if(profile&&CURRENT_UID)reloadAch();},[profile,view,examModel]);
+  const saveProfile=async()=>{
+    if(!fName.trim())return;
+    const p={name:fName.trim(),gender:fGender,grade:Number(fGrade),term:Number(fTerm)};
+    // في وضع المعاينة لا نحفظ شيئاً في قاعدة البيانات (حتى لا يتغيّر حساب المشرف)
+    if(!preview){try{await sb.rpc('register_student',{p_name:p.name,p_gender:p.gender,p_grade:p.grade,p_term:p.term});}catch(e){}}
+    setProfile(p);setTerm(p.term);
+  };
+  const doReexplain=async()=>{
+    setExtraBusy(true);
+    const {data,error}=await sb.functions.invoke('reexplain',{body:{lesson_id:lesson.id,gender:gen}});
+    setExtraBusy(false);
+    if(error){setExtra('تعذّر تحميل الشرح الإضافي: '+(error.message||''));return;}
+    setExtra((data&&data.text)||'');
+  };
+
+  const stopSpeak=()=>{ if(window.speechSynthesis){window.speechSynthesis.cancel();} setSpeaking(false); };
+  const loadCourses=async()=>{const{data}=await sb.from('courses').select('*').eq('is_published',true)
+    .eq('grade_level',profile?profile.grade:0).eq('term',profile?profile.term:2).order('title');setCourses(data||[]);};
+  useEffect(()=>{if(profile)loadCourses();return stopSpeak;},[profile]);
+  useEffect(()=>{(async()=>{
+    if(mode==='exams'&&exam&&course){
+      const {data}=await sb.from('questions').select('model_no').eq('course_id',course.id).eq('exam_period',exam);
+      const set=[...new Set((data||[]).map(r=>r.model_no||1))].sort((a,b)=>a-b);
+      setAvailModels(set);
+      // يختار نموذجاً عشوائياً تلقائياً بدون ما يحتار الطالب
+      setExamModel(prev=> prev || (set.length?set[Math.floor(Math.random()*set.length)]:null));
+    }else{setAvailModels([]);}
+  })();},[exam,course,mode]);
+  const anotherModel=()=>{const others=availModels.filter(m=>m!==examModel);
+    if(others.length)setExamModel(others[Math.floor(Math.random()*others.length)]);};
+  // الطالب يولّد أسئلة تدريبية جديدة لنفسه ويتدرّب أكثر
+  const [genBusy,setGenBusy]=useState(false);
+  const studentGenerate=async()=>{
+    try{
+      setGenBusy(true);
+      const{data,error}=await sb.functions.invoke('generate-variants',{body:{course_id:course.id,source_period:exam}});
+      if(error||(data&&data.error)){setGenBusy(false);alert((data&&data.error)||error.message||'تعذّر التوليد');return;}
+      await sb.functions.invoke('arrange-models',{body:{course_id:course.id,exam_period:'practice'}});
+      setGenBusy(false);setMode('exams');setExam('practice');setExamModel(null);
+    }catch(e){setGenBusy(false);}
+  };
+  const openCourse=async(c)=>{stopSpeak();setCourse(c);setLesson(null);setVariants(null);
+    const{data}=await sb.from('lessons').select('id,title,position').eq('course_id',c.id).order('position');setLessons(data||[]);};
+  const backToLessons=()=>{stopSpeak();setLesson(null);setVariants(null);};
+  const openLesson=async(l)=>{
+    stopSpeak();setLesson(l);setVariants(null);setExtra('');setReadTab('explanation');setBusy('جاري تحميل الشرح...');
+    let {data}=await sb.from('lesson_contents').select('ai_variant,body').eq('lesson_id',l.id).eq('is_ai_generated',true).eq('audience_gender',gen);
+    if(!data||data.length<3){
+      setBusy('الذكاء الاصطناعي يحضّر الشرح... (المرة الأولى فقط)');
+      const{error}=await sb.functions.invoke('explain-lesson',{body:{lesson_id:l.id,gender:gen}});
+      if(error){setBusy('تعذّر توليد الشرح: '+(error.message||''));return;}
+      const r=await sb.from('lesson_contents').select('ai_variant,body').eq('lesson_id',l.id).eq('is_ai_generated',true).eq('audience_gender',gen);
+      data=r.data||[];
+    }
+    const v={};(data||[]).forEach(x=>v[x.ai_variant]=x.body);
+    setVariants(v);setBusy('');
+  };
+  const READ=[['explanation','📖 الشرح'],['simplified','💡 تبسيط'],['examples','✏️ أمثلة']];
+  const readContent=()=>{
+    if(!variants)return null;
+    if(readTab==='examples'){
+      let arr=[];try{arr=JSON.parse(variants.examples||'[]');}catch(e){arr=variants.examples?[variants.examples]:[];}
+      if(!Array.isArray(arr))arr=[arr];
+      return <ol style={{paddingInlineStart:22,lineHeight:2.2,fontSize:16,margin:0}}>{arr.map((x,i)=><li key={i} style={{marginBottom:8}}>{typeof x==='string'?x:JSON.stringify(x)}</li>)}</ol>;
+    }
+    return <div style={{whiteSpace:'pre-line',lineHeight:2.3,fontSize:16}}>{variants[readTab]||'— غير متوفر —'}</div>;
+  };
+  const toggleAudio=()=>{
+    if(!window.speechSynthesis){alert('متصفحك لا يدعم القراءة الصوتية');return;}
+    if(speaking){stopSpeak();return;}
+    const txt=variants.audio_script||variants.explanation||'';
+    const u=new SpeechSynthesisUtterance(txt);u.lang='ar-SA';u.rate=0.95;
+    u.onend=()=>setSpeaking(false);u.onerror=()=>setSpeaking(false);
+    window.speechSynthesis.cancel();window.speechSynthesis.speak(u);setSpeaking(true);
+  };
+
+  // أثناء تحميل الملف من قاعدة البيانات
+  if(!profile&&!profileLoaded)return(<div className="card" style={{fontWeight:600,color:'var(--muted)'}}>جارٍ تحميل ملفك...</div>);
+  // ١) تسجيل الطالب
+  if(!profile)return(<>
+    <PageHead title="أهلاً بك في فطن 👋" sub="عرّفنا على نفسك لنبدأ"/>
+    <div className="card" style={{maxWidth:460,margin:'0 auto'}}>
+      <div className="field"><label>الاسم</label><input value={fName} onChange={e=>setFName(e.target.value)} placeholder="اكتب اسمك"/></div>
+      <div className="field"><label>الجنس</label>
+        <select value={fGender} onChange={e=>setFGender(e.target.value)}
+          style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+          <option value="male">ذكر</option>
+          <option value="female">أنثى</option>
+        </select></div>
+      <div className="field"><label>الصف</label>
+        <select value={fGrade} onChange={e=>setFGrade(e.target.value)}
+          style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+          <option value={6}>السادس الابتدائي</option>
+          <option value={9}>الثالث المتوسط</option>
+        </select></div>
+      <div className="field"><label>الترم الدراسي</label>
+        <select value={fTerm} onChange={e=>setFTerm(e.target.value)}
+          style={{width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+          {activeTerms.includes(1)&&<option value={1}>الترم الأول</option>}
+          {activeTerms.includes(2)&&<option value={2}>الترم الثاني</option>}
+        </select></div>
+      <button className="btn" style={{width:'100%',justifyContent:'center'}} onClick={saveProfile}>ابدأ التعلّم ←</button>
+    </div>
+  </>);
+
+  // لوحة الطالب
+  if(view==='challenge')return(<>{previewBar}<Leaderboard adminMode={false}/></>);
+  if(view==='writing')return(<>{previewBar}<WritingCards grade={profile.grade}/></>);
+  if(view==='dash'){
+    const res=results;const total=res.length;const correct=res.filter(r=>r.correct).length;const wrong=total-correct;
+    const acc=total?Math.round(correct/total*100):0;
+    const bySub={};res.forEach(r=>{const s=r.subject||'—';bySub[s]=bySub[s]||{c:0,w:0};r.correct?bySub[s].c++:bySub[s].w++;});
+    const subs=Object.entries(bySub).map(([s,v])=>({s,...v,t:v.c+v.w,a:Math.round(v.c/(v.c+v.w)*100)})).sort((a,b)=>a.a-b.a);
+    const finals=exams.filter(e=>e.period==='final');
+    const distinctModels=new Set(exams.map(e=>(e.subject||'')+'|'+(e.period||'')+'|'+(e.model||1))).size;
+    const pLbl=(p)=> p==='period1'?'الفترة الأولى':p==='period2'?'الفترة الثانية':p==='central'?'المركزي':p==='practice'?'تدريبي':'النهائي';
+    // مؤشر الجاهزية: يجمع بين الدقة وكمية التدريب (الهدف ٢٠ سؤال لكل مادة)
+    const TARGET=20;
+    const tone3=(p)=> p>=80?['var(--ok-l)','var(--ok)']:p>=50?['var(--warn-l)','var(--warn)']:['var(--danger-l)','var(--danger)'];
+    const subReady=subs.map(x=>({s:x.s,r:Math.min(100,Math.round(x.c/Math.max(x.t,TARGET)*100)),t:x.t}));
+    const overall=subReady.length?Math.round(subReady.reduce((a,b)=>a+b.r,0)/subReady.length):0;
+    const weakest=subReady.slice().sort((a,b)=>a.r-b.r)[0];
+    const needPractice=subReady.filter(x=>x.t<TARGET).map(x=>x.s);
+    const ot=tone3(overall);const readyLbl=(p)=> p>=80?'جاهز ممتاز 🌟':p>=50?'في الطريق — واصل':'يحتاج تدريب أكثر';
+    return(<>
+      {previewBar}
+      <PageHead title={"لوحة "+profile.name+" 📊"} sub="إنجازك وجاهزيتك للاختبار ونقاط قوتك وضعفك"/>
+      {ach&&(<div className="card" style={{marginBottom:18,background:'linear-gradient(135deg,var(--primary-l),var(--surface))'}}>
+        <div className="card-title">🔥 إنجاز اليوم</div>
+        <div className="grid g4" style={{marginBottom:6}}>
+          <div style={{textAlign:'center',padding:'8px 0'}}><div style={{fontSize:34,fontWeight:800,color:'var(--primary-d)'}}>{ar(Number(ach.answered_today))}</div><div className="soft">سؤال حليته اليوم</div></div>
+          <div style={{textAlign:'center',padding:'8px 0'}}><div style={{fontSize:34,fontWeight:800,color:'var(--ok)'}}>{ar(Number(ach.correct_today))}</div><div className="soft">إجابة صحيحة اليوم</div></div>
+          <div style={{textAlign:'center',padding:'8px 0'}}><div style={{fontSize:34,fontWeight:800,color:'var(--accent)'}}>{ar(Number(ach.exams_today))}</div><div className="soft">اختبار خلصته اليوم</div></div>
+          <div style={{textAlign:'center',padding:'8px 0'}}><div style={{fontSize:34,fontWeight:800,color:'var(--warn)'}}>{ar(Number(ach.answered_today)?Math.round(Number(ach.correct_today)/Number(ach.answered_today)*100):0)}٪</div><div className="soft">دقتك اليوم</div></div>
+        </div>
+        <div style={{marginTop:8,padding:'9px 13px',borderRadius:10,background:'var(--surface)',fontWeight:700,color:'var(--primary-d)',lineHeight:1.9}}>
+          {Number(ach.answered_today)===0?'لسا ما بدأت اليوم — حل ولو اختبار واحد ✨':('ممتاز! استمر — مجموع إنجازك '+ar(Number(ach.answered_total))+' سؤال في '+ar(Number(ach.active_days))+' يوم نشاط 💪')}
+        </div>
+      </div>)}
+      <div style={{fontWeight:800,fontSize:15,color:'var(--muted)',margin:'2px 4px 10px'}}>📈 مجموع إنجازك (منذ البداية)</div>
+      <div className="grid g4" style={{marginBottom:18}}>
+        <KPI icon={Ico.test} val={ar(distinctModels)} lbl="نماذج مكتملة" tint={['var(--primary-l)','var(--primary-d)']}/>
+        <KPI icon={Ico.star} val={ar(correct)} lbl="إجابات صحيحة" tint={['var(--ok-l)','var(--ok)']}/>
+        <KPI icon={Ico.bell} val={ar(wrong)} lbl="أخطاء" tint={['var(--danger-l)','var(--danger)']}/>
+        <KPI icon={Ico.chart} val={ar(acc)+'٪'} lbl="نسبة الدقة" tint={['var(--accent-l)','var(--accent)']}/>
+      </div>
+      <div className="card" style={{marginBottom:18,background:'linear-gradient(135deg,'+ot[0]+',var(--surface))'}}>
+        <div className="card-title">🎯 جاهزيتك للاختبار</div>
+        {subs.length===0?<div className="soft">ابدأ بحل اختبار ليظهر مؤشر جاهزيتك.</div>:(<>
+        <div style={{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap',marginBottom:12}}>
+          <div style={{fontSize:46,fontWeight:800,color:ot[1],minWidth:90}}>{ar(overall)}٪</div>
+          <div style={{flex:1,minWidth:180}}>
+            <div style={{fontWeight:800,color:ot[1],marginBottom:6}}>{readyLbl(overall)}</div>
+            <div className="progress" style={{height:12}}><span style={{width:overall+'%',background:ot[1]}}/></div>
+          </div>
+        </div>
+        {subReady.map(x=>{const t=tone3(x.r);return(<div key={x.s} style={{marginBottom:10}}>
+          <div style={{display:'flex',justifyContent:'space-between',fontWeight:700,marginBottom:5}}>
+            <span>{x.s}</span><span style={{color:t[1]}}>{ar(x.r)}٪</span></div>
+          <div className="progress"><span style={{width:x.r+'%',background:t[1]}}/></div></div>);})}
+        <div style={{marginTop:10,padding:'10px 13px',borderRadius:10,background:'var(--primary-l)',color:'var(--primary-d)',fontWeight:700,lineHeight:1.9}}>
+          {weakest&&weakest.r<80?('💡 ركّز على «'+weakest.s+'» لرفع جاهزيتك.'):'💪 مستواك ممتاز — استمر بالمراجعة!'}
+          {needPractice.length>0&&<div style={{marginTop:4,fontWeight:600}}>تحتاج تحل أسئلة أكثر في: {needPractice.join('، ')}</div>}
+        </div></>)}
+      </div>
+      <div className="card" style={{marginBottom:18}}>
+        <div className="card-title">نماذج الاختبارات النهائية المحلولة 🏁 <span className="pill ai">{ar(finals.length)}</span></div>
+        {finals.length===0&&<div className="soft">لم تحلّ أي نموذج اختبار نهائي بعد — افتح أي مادة ← الاختبارات ← النهائي.</div>}
+        {finals.slice().reverse().map((e,i)=>(
+          <div className="list-row" key={i}>
+            <div className="roundico" style={{background:'var(--primary-l)',color:'var(--primary-d)'}}>{Ico.test}</div>
+            <div style={{flex:1,fontWeight:600}}>{e.subject}</div>
+            <span className="tag" style={{background:e.score/e.total>=0.6?'var(--ok-l)':'var(--danger-l)',color:e.score/e.total>=0.6?'var(--ok)':'var(--danger)'}}>{ar(e.score)}/{ar(e.total)}</span></div>))}
+      </div>
+      <div className="card">
+        <div className="card-title">مستواك حسب المادة</div>
+        {subs.length===0&&<div className="soft">ابدأ بحل اختبار لتظهر إحصاءاتك.</div>}
+        {subs.map(x=>(<div key={x.s} style={{marginBottom:14}}>
+          <div style={{display:'flex',justifyContent:'space-between',marginBottom:6,fontWeight:700}}>
+            <span>{x.s}</span><span style={{color:x.a<60?'var(--danger)':'var(--ok)'}}>{ar(x.a)}٪ {x.a<60?'يحتاج تقوية':'جيد'}</span></div>
+          <div className="progress"><span style={{width:x.a+'%',background:x.a<60?'var(--danger)':'linear-gradient(90deg,var(--primary),var(--accent))'}}/></div>
+          <div className="soft" style={{marginTop:4}}>صحيح {ar(x.c)} · خطأ {ar(x.w)}</div></div>))}
+      </div>
+    </>);
+  }
+
+  // قسم أخطائي
+  if(view==='mistakes'){
+    const wrong=results.filter(r=>!r.correct);
+    const clear=async()=>{if(CURRENT_UID&&sb)await sb.from('exam_answers').delete().eq('student_id',CURRENT_UID).eq('is_correct',false);reloadStats();};
+    return(<>
+      <PageHead title="أخطائي 📝" sub="راجع هذي النقاط لتقوية نفسك"/>
+      {wrong.length===0&&<div className="card soft">ما عندك أخطاء — ممتاز! 🌟</div>}
+      {wrong.map((r,i)=>(<div className="card" key={i} style={{marginBottom:12}}>
+        <div style={{fontWeight:700,marginBottom:8}}><MathText text={r.stem}/></div>
+        <div style={{padding:'10px 13px',borderRadius:10,background:'var(--ok-l)',color:'var(--ok)',fontWeight:700}}>الإجابة الصحيحة: <MathText text={r.correctText}/></div>
+        <div className="soft" style={{marginTop:6}}>{r.subject}</div>
+        {explainOn&&r.qid&&<ExplainMore qid={r.qid} gender={gen}/>}</div>))}
+      {wrong.length>0&&<button className="btn ghost sm" onClick={clear}>مسح الأخطاء المُراجَعة</button>}
+    </>);
+  }
+
+  // ٣) المواد (حسب الصف والترم من ملف الطالب)
+  if(!course)return(<>
+    {previewBar}
+    <PageHead title="موادي 📚" sub={gradeName(profile.grade)+" · "+termName(profile.term)}
+      action={<button className="btn ghost sm" onClick={()=>{setFName(profile.name||'');setFGender(profile.gender||'male');setFGrade(profile.grade||6);setFTerm(profile.term||2);setProfile(null);}}>تغيير بياناتي</button>}/>
+    <div className="grid g3">
+      {courses.length===0&&<div className="soft">لا توجد مواد لهذا الصف بعد.</div>}
+      {courses.map(c=>(
+        <div className="card lib-card" key={c.id} style={{cursor:'pointer',textAlign:'center',paddingTop:22}} onClick={()=>{setCourse(c);setMode(null);setExam(null);}}>
+          <div style={{width:64,height:64,borderRadius:18,margin:'0 auto 12px',display:'grid',placeItems:'center',
+            fontSize:28,fontWeight:800,color:'#fff',background:'linear-gradient(135deg,var(--primary),var(--accent))'}}>{c.title[0]}</div>
+          <div style={{fontWeight:800,fontSize:17}}>{c.title}</div>
+        </div>))}
+    </div>
+  </>);
+
+  // ٤) صفحة المادة: دروس أو اختبارات
+  if(course&&!mode)return(<>
+    {previewBar}
+    <PageHead title={course.title} sub="اختر مسارك"
+      action={<button className="btn ghost sm" onClick={()=>setCourse(null)}>→ المواد</button>}/>
+    <div className={lessonsOn?"grid g2":""}>
+      {lessonsOn&&<div className="card lib-card" style={{cursor:'pointer',textAlign:'center',padding:34}} onClick={()=>{setMode('lessons');openCourse(course);}}>
+        <div style={{fontSize:42}}>📖</div><div style={{fontWeight:800,fontSize:21,marginTop:8}}>الدروس</div>
+        <div className="soft" style={{marginTop:4}}>افهم المادة بالشرح والتدريب</div></div>}
+      <div className="card lib-card" style={{cursor:'pointer',textAlign:'center',padding:34}} onClick={()=>setMode('exams')}>
+        <div style={{fontSize:42}}>📝</div><div style={{fontWeight:800,fontSize:21,marginTop:8}}>الاختبارات</div>
+        <div className="soft" style={{marginTop:4}}>جهّز نفسك للاختبار</div></div>
+    </div>
+  </>);
+
+  // ٥) قائمة الاختبارات الثلاثة
+  if(mode==='exams'&&!exam)return(<>
+    <PageHead title={"اختبارات "+course.title} sub={"الترم "+(term===1?'الأول':'الثاني')}
+      action={<button className="btn ghost sm" onClick={()=>setMode(null)}>→ المادة</button>}/>
+    <div className="grid g3">
+      {[['period1','اختبار الفترة الأولى'],['period2','اختبار الفترة الثانية'],['final','الاختبار النهائي'],['central','الاختبار المركزي'],['practice','اختبار تدريبي 🧪']].map(([p,l])=>(
+        <div className="card lib-card" key={p} style={{cursor:'pointer',textAlign:'center',padding:26}} onClick={()=>{setExam(p);setExamModel(null);}}>
+          <div style={{fontSize:36}}>📝</div><div style={{fontWeight:800,fontSize:17,marginTop:8}}>{l}</div>
+          <div className="soft" style={{marginTop:4}}>تدرّب وجهّز نفسك</div></div>))}
+    </div>
+  </>);
+
+  // ٦) أداء الاختبار — تظهر كل النماذج ويُفتح كل نموذج كاملاً
+  if(mode==='exams'&&exam)return(<>
+    {previewBar}
+    <PageHead title={examLabel(exam)+(examModel?(' — النموذج '+ar(examModel)):'')} sub={course.title}
+      action={<button className="btn ghost sm" onClick={()=>{setExam(null);setExamModel(null);}}>→ الاختبارات</button>}/>
+    {availModels.length>1&&(<div className="card" style={{marginBottom:14}}>
+      <div className="card-title" style={{marginBottom:8}}>اختر النموذج ({ar(availModels.length)} نماذج)</div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+        {availModels.map(m=>(<button key={m} onClick={()=>setExamModel(m)}
+          style={{padding:'9px 16px',borderRadius:11,border:'1.5px solid '+(m===examModel?'var(--primary)':'var(--line)'),
+            background:m===examModel?'var(--primary)':'var(--surface)',color:m===examModel?'#fff':'var(--ink)',
+            fontFamily:'inherit',fontWeight:700,fontSize:14,cursor:'pointer'}}>النموذج {ar(m)}</button>))}
+      </div>
+    </div>)}
+    {examModel
+      ? <CourseExam key={exam+'-'+examModel} course={course} period={exam} model={examModel} onAnother={anotherModel} canAnother={availModels.length>1} gender={gen} allowExplain={explainOn} onGenerate={studentGenerate} canGenerate={explainOn} genBusy={genBusy}/>
+      : <div className="card soft">جاري تجهيز نموذج الاختبار...</div>}
+  </>);
+
+  // ٧) قائمة الدروس
+  if(mode==='lessons'&&!lesson)return(<>
+    <PageHead title={course.title} sub="اختر درساً للبدء"
+      action={<button className="btn ghost sm" onClick={()=>{stopSpeak();setMode(null);}}>→ المادة</button>}/>
+    <div className="card">
+      {lessons.length===0&&<div className="soft">لا توجد دروس بعد.</div>}
+      {lessons.map((l,i)=>(
+        <div className="list-row" key={l.id} style={{cursor:'pointer'}} onClick={()=>openLesson(l)}>
+          <div className="roundico" style={{background:'var(--primary-l)',color:'var(--primary-d)',fontWeight:800}}>{i+1}</div>
+          <div style={{flex:1,fontWeight:600}}>{l.title}</div>
+          <span className="btn sm">ابدأ ←</span></div>))}
+    </div>
+  </>);
+
+  // ٨) شاشة الدرس
+  return(<>
+    <PageHead title={lesson.title} sub={course.title}
+      action={<button className="btn ghost sm" onClick={backToLessons}>→ الدروس</button>}/>
+    {busy&&<div className="card" style={{fontWeight:600,color:'var(--primary-d)'}}>{busy}</div>}
+    {variants&&(<>
+      <div className="card" style={{marginBottom:18}}>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:16}}>
+          {READ.map(([k,l])=>(<button key={k} className={readTab===k?'btn sm':'btn ghost sm'} onClick={()=>setReadTab(k)}>{l}</button>))}
+          <button className="btn sm" style={{marginInlineStart:'auto',background:speaking?'var(--danger)':'var(--accent)'}}
+            onClick={toggleAudio}>{speaking?'⏹ إيقاف':'🔊 استمع للشرح'}</button>
+        </div>
+        <div style={{padding:'4px 2px'}}>{readContent()}</div>
+      </div>
+      <div style={{textAlign:'center',marginBottom:18}}>
+        <button className="btn" style={{background:'var(--warn)'}} disabled={extraBusy} onClick={doReexplain}>
+          {extraBusy?'... جاري التبسيط':'🤔 ما فهمت؟ اشرح لي أكثر'}</button>
+      </div>
+      {extra&&(<div className="card" style={{marginBottom:18,background:'var(--warn-l)',whiteSpace:'pre-line',lineHeight:2.3,fontSize:16}}>
+        <div style={{fontWeight:800,color:'var(--warn)',marginBottom:8}}>شرح إضافي مبسّط 🌱</div>{extra}</div>)}
+      <div style={{fontWeight:800,fontSize:19,margin:'6px 4px 14px'}}>تدريب تفاعلي ✏️</div>
+      <LessonQuiz lessonId={lesson.id} subject={course.title}/>
+    </>)}
+  </>);
+}
+
+/* ================ APP SHELL ================ */
+const MENUS={
+  super_admin:[['dash','الرئيسية',Ico.dash],['users','إدارة المستخدمين',Ico.users],['content','المحتوى التعليمي',Ico.book],['qimages','إرفاق صور الأسئلة',Ico.book],['writing_admin','مواضيع التعبير',Ico.book],['reports_q','بلاغات الأسئلة',Ico.bell],['student_preview','معاينة الطالب',Ico.grad],['activity','نشاط الطلاب',Ico.grad],['leaderboard','لوحة المتصدرين',Ico.star],['reports','التقارير',Ico.chart],['settings','الإعدادات',Ico.shield],['notif','الإشعارات',Ico.bell]],
+  supervisor:[['dash','الرئيسية',Ico.dash],['content','المحتوى التعليمي',Ico.book],['qimages','إرفاق صور الأسئلة',Ico.book],['writing_admin','مواضيع التعبير',Ico.book],['reports_q','بلاغات الأسئلة',Ico.bell],['activity','نشاط الطلاب',Ico.grad],['leaderboard','لوحة المتصدرين',Ico.star],['reports','التقارير',Ico.chart],['settings','الإعدادات',Ico.shield],['notif','الإشعارات',Ico.bell]],
+  parent:[['dash','أبنائي',Ico.users],['notif','الإشعارات',Ico.bell]],
+  student:[['dash','لوحتي',Ico.dash],['subjects','موادي',Ico.book],['mistakes','أخطائي',Ico.task],['writing','بطاقات التعبير',Ico.book],['challenge','التحدي',Ico.star]],
+};
+const ROLE_AR={super_admin:'مدير النظام',supervisor:'مشرف تعليمي',teacher:'المعلم',parent:'ولي الأمر',student:'الطالب'};
+
+// إدارة وتسجيل المستخدمين (للأدمن)
+function UsersAdmin({acct}){
+  const sel={width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'};
+  const ROLE_AR={super_admin:'مدير النظام',supervisor:'مشرف',teacher:'معلم',parent:'ولي أمر',student:'طالب'};
+  const [list,setList]=useState([]);
+  const [busy,setBusy]=useState('');const [err,setErr]=useState('');const [msg,setMsg]=useState('');
+  const [f,setF]=useState({full_name:'',email:'',password:'',role:'student',grade:6,gender:'male',term:2});
+  const load=async()=>{
+    const{data}=await sb.from('accounts').select('id,full_name,role,email,created_at').order('created_at',{ascending:false});
+    let rows=data||[];
+    try{const{data:st}=await sb.rpc('org_users_status');const m={};(st||[]).forEach(x=>{m[x.id]=x;});
+      rows=rows.map(r=>({...r,confirmed:m[r.id]?m[r.id].confirmed:undefined,last_sign_in:m[r.id]?m[r.id].last_sign_in:null}));}catch(e){}
+    setList(rows);
+  };
+  const resetPass=async(u)=>{
+    const def='Fatin@'+Math.floor(1000+Math.random()*9000);
+    const p=window.prompt('كلمة مرور جديدة لـ '+(u.full_name||u.email||'المستخدم')+':',def);
+    if(!p)return;
+    setErr('');setMsg('');setBusy('جاري تعيين كلمة المرور...');
+    const{data,error}=await sb.functions.invoke('admin-update-user',{body:{action:'password',user_id:u.id,password:p}});
+    setBusy('');
+    if(error||(data&&data.error)){setErr('تعذّر تعيين كلمة المرور: '+((data&&data.error)||error.message));return;}
+    setMsg('تم ✅ كلمة مرور '+(u.full_name||u.email)+' الجديدة: '+p+' (انسخيها وأرسليها له)');
+  };
+  useEffect(()=>{load();},[]);
+  const create=async()=>{
+    setErr('');setMsg('');
+    if(!f.full_name.trim()||!f.email.trim()||!f.password){setErr('اكتب الاسم والبريد وكلمة المرور.');return;}
+    if(f.password.length<6){setErr('كلمة المرور ٦ أحرف على الأقل.');return;}
+    setBusy('جاري إنشاء الحساب...');
+    const{data,error}=await sb.functions.invoke('admin-create-user',{body:f});
+    setBusy('');
+    if(error||(data&&data.error)){setErr('تعذّر: '+((data&&data.error)||error.message));return;}
+    setMsg('تم إنشاء حساب «'+f.full_name+'» ✅');setF({...f,full_name:'',email:'',password:''});load();
+  };
+  // ربط ولي الأمر بالطالب
+  const [links,setLinks]=useState([]);
+  const [lk,setLk]=useState({parent:'',student:'',relation:'الأب'});
+  const loadLinks=async()=>{const{data}=await sb.functions.invoke('admin-link-parent',{body:{action:'list'}});setLinks((data&&data.links)||[]);};
+  useEffect(()=>{loadLinks();},[]);
+  const parentsList=list.filter(u=>u.role==='parent');
+  const studentsList=list.filter(u=>u.role==='student');
+  const doLink=async()=>{
+    setErr('');setMsg('');
+    if(!lk.parent||!lk.student){setErr('اختر ولي الأمر والطالب.');return;}
+    setBusy('جاري الربط...');
+    const{data,error}=await sb.functions.invoke('admin-link-parent',{body:{action:'link',parent_account:lk.parent,student_account:lk.student,relation:lk.relation}});
+    setBusy('');
+    if(error||(data&&data.error)){setErr('تعذّر الربط: '+((data&&data.error)||error.message));return;}
+    setMsg(data&&data.already?'هذا الربط موجود مسبقاً':'تم ربط ولي الأمر بالطالب ✅');loadLinks();
+  };
+  const unlink=async(id)=>{await sb.functions.invoke('admin-link-parent',{body:{action:'unlink',link_id:id}});loadLinks();};
+  // تعديل / حذف / كلمة مرور
+  const [editId,setEditId]=useState(null);
+  const [ef,setEf]=useState({full_name:'',role:'student',grade:6,gender:'male',term:2,can_explain:true,can_lessons:true});
+  const [newPass,setNewPass]=useState('');
+  const openEdit=async(u)=>{
+    let grade=6,gender='male',term=2,ce=true,cl=true;
+    if(u.role==='student'){const{data}=await sb.from('students').select('grade_level,gender,term,can_explain,can_lessons').eq('account_id',u.id).maybeSingle();if(data){grade=data.grade_level||6;gender=data.gender||'male';term=data.term||2;ce=data.can_explain!==false;cl=data.can_lessons!==false;}}
+    setEf({full_name:u.full_name||'',role:u.role,grade,gender,term,can_explain:ce,can_lessons:cl});setNewPass('');setErr('');setMsg('');setEditId(u.id);
+  };
+  const saveEdit=async()=>{
+    setErr('');setMsg('');setBusy('جاري الحفظ...');
+    const{data,error}=await sb.functions.invoke('admin-update-user',{body:{action:'update',user_id:editId,full_name:ef.full_name,role:ef.role,grade:ef.grade,gender:ef.gender,term:ef.term,can_explain:ef.can_explain,can_lessons:ef.can_lessons}});
+    if(!error&&!(data&&data.error)&&newPass){await sb.functions.invoke('admin-update-user',{body:{action:'password',user_id:editId,password:newPass}});}
+    setBusy('');
+    if(error||(data&&data.error)){setErr('تعذّر: '+((data&&data.error)||error.message));return;}
+    setMsg('تم حفظ التعديلات ✅');setEditId(null);load();loadLinks();
+  };
+  const delUser=async(id)=>{
+    if(!confirm('حذف هذا المستخدم نهائياً؟ لا يمكن التراجع.'))return;
+    const{data,error}=await sb.functions.invoke('admin-update-user',{body:{action:'delete',user_id:id}});
+    if(error||(data&&data.error)){setErr('تعذّر الحذف: '+((data&&data.error)||error.message));return;}
+    setMsg('تم حذف المستخدم 🗑');setEditId(null);load();loadLinks();
+  };
+  return(<>
+   <PageHead title="إدارة المستخدمين" sub="أنشئ حسابات الطلاب وأولياء الأمور وأدر صلاحياتهم"/>
+   <div className="card" style={{marginBottom:16}}>
+     <div className="card-title">➕ تسجيل مستخدم جديد</div>
+     <div className="grid g2">
+       <div className="field"><label>الاسم الكامل</label><input value={f.full_name} onChange={e=>setF({...f,full_name:e.target.value})} placeholder="مثال: سارة أحمد"/></div>
+       <div className="field"><label>الدور</label>
+         <select value={f.role} onChange={e=>setF({...f,role:e.target.value})} style={sel}>
+           <option value="student">طالب</option>
+           <option value="parent">ولي أمر</option><option value="supervisor">مشرف</option>
+           <option value="super_admin">مدير النظام</option></select></div>
+       <div className="field"><label>البريد الإلكتروني</label><input value={f.email} onChange={e=>setF({...f,email:e.target.value})} placeholder="student@fatin.edu"/></div>
+       <div className="field"><label>كلمة المرور</label><input value={f.password} onChange={e=>setF({...f,password:e.target.value})} placeholder="٦ أحرف على الأقل"/></div>
+       {f.role==='student'&&(<>
+         <div className="field"><label>الصف</label>
+           <select value={f.grade} onChange={e=>setF({...f,grade:Number(e.target.value)})} style={sel}>
+             {ALL_GRADES.map(x=><option key={x.g} value={x.g}>{x.label}</option>)}</select></div>
+         <div className="field"><label>الجنس</label>
+           <select value={f.gender} onChange={e=>setF({...f,gender:e.target.value})} style={sel}>
+             <option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+         <div className="field"><label>الترم</label>
+           <select value={f.term} onChange={e=>setF({...f,term:Number(e.target.value)})} style={sel}>
+             <option value={1}>الترم الأول</option><option value={2}>الترم الثاني</option></select></div></>)}
+     </div>
+     {err&&<div style={{background:'var(--danger-l)',color:'var(--danger)',padding:'10px 13px',borderRadius:10,fontWeight:600,marginBottom:10}}>{err}</div>}
+     {msg&&<div style={{background:'var(--ok-l)',color:'var(--ok)',padding:'10px 13px',borderRadius:10,fontWeight:600,marginBottom:10}}>{msg}</div>}
+     <button className="btn" disabled={!!busy} onClick={create}>{busy||'إنشاء الحساب'}</button>
+   </div>
+   <div className="card" style={{marginBottom:16}}>
+     <div className="card-title">👨‍👩‍👦 ربط ولي أمر بطالب</div>
+     <p className="soft" style={{lineHeight:1.8,marginBottom:10}}>اختر ولي الأمر والطالب لربطهما، ليتابع ولي الأمر تقدّم ابنه/ابنته.</p>
+     <div className="grid g3">
+       <div className="field"><label>ولي الأمر</label>
+         <select value={lk.parent} onChange={e=>setLk({...lk,parent:e.target.value})} style={sel}>
+           <option value="">— اختر —</option>
+           {parentsList.map(p=><option key={p.id} value={p.id}>{p.full_name||p.email}</option>)}</select></div>
+       <div className="field"><label>الطالب</label>
+         <select value={lk.student} onChange={e=>setLk({...lk,student:e.target.value})} style={sel}>
+           <option value="">— اختر —</option>
+           {studentsList.map(s=><option key={s.id} value={s.id}>{s.full_name||s.email}</option>)}</select></div>
+       <div className="field"><label>صلة القرابة</label>
+         <select value={lk.relation} onChange={e=>setLk({...lk,relation:e.target.value})} style={sel}>
+           <option value="الأب">الأب</option><option value="الأم">الأم</option><option value="ولي أمر">ولي أمر</option></select></div>
+     </div>
+     <button className="btn" disabled={!!busy} onClick={doLink}>🔗 ربط</button>
+     {parentsList.length===0&&<p className="soft" style={{marginTop:8}}>أنشئ حساب «ولي أمر» أولاً من الأعلى ليظهر هنا.</p>}
+     {links.length>0&&<div style={{marginTop:14}}>
+       {links.map(l=>(<div key={l.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'9px 0',borderBottom:'1px solid var(--line)'}}>
+         <div><b>{l.parent_name}</b> <span className="soft">({l.relation})</span> ← {l.student_name}</div>
+         <button className="btn ghost sm" style={{color:'var(--danger)'}} onClick={()=>unlink(l.id)}>فكّ الربط</button>
+       </div>))}
+     </div>}
+   </div>
+   <div className="card">
+     <div className="card-title">المستخدمون ({ar(list.length)})</div>
+     {list.map(u=>(<div key={u.id} style={{padding:'11px 0',borderBottom:'1px solid var(--line)'}}>
+       {editId===u.id?(
+         <div>
+           <div className="grid g2">
+             <div className="field"><label>الاسم</label><input value={ef.full_name} onChange={e=>setEf({...ef,full_name:e.target.value})}/></div>
+             <div className="field"><label>الدور</label>
+               <select value={ef.role} onChange={e=>setEf({...ef,role:e.target.value})} style={sel}>
+                 <option value="student">طالب</option>
+                 <option value="parent">ولي أمر</option><option value="supervisor">مشرف</option>
+                 <option value="super_admin">مدير النظام</option></select></div>
+             {ef.role==='student'&&(<>
+               <div className="field"><label>الصف</label>
+                 <select value={ef.grade} onChange={e=>setEf({...ef,grade:Number(e.target.value)})} style={sel}>
+                   {ALL_GRADES.map(x=><option key={x.g} value={x.g}>{x.label}</option>)}</select></div>
+               <div className="field"><label>الجنس</label>
+                 <select value={ef.gender} onChange={e=>setEf({...ef,gender:e.target.value})} style={sel}>
+                   <option value="male">ذكر</option><option value="female">أنثى</option></select></div>
+               <div className="field"><label>الترم</label>
+                 <select value={ef.term} onChange={e=>setEf({...ef,term:Number(e.target.value)})} style={sel}>
+                   <option value={1}>الترم الأول</option><option value={2}>الترم الثاني</option></select></div>
+               <div className="field"><label>صلاحية «ارجع افهم»</label>
+                 <select value={ef.can_explain?'1':'0'} onChange={e=>setEf({...ef,can_explain:e.target.value==='1'})} style={sel}>
+                   <option value="1">مسموح</option><option value="0">موقوف (توفير توكن)</option></select></div>
+               <div className="field"><label>صلاحية الدروس بالشرح</label>
+                 <select value={ef.can_lessons?'1':'0'} onChange={e=>setEf({...ef,can_lessons:e.target.value==='1'})} style={sel}>
+                   <option value="1">مسموح</option><option value="0">موقوف (توفير توكن)</option></select></div></>)}
+             <div className="field"><label>كلمة مرور جديدة (اختياري)</label><input value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="اتركه فارغاً لعدم التغيير"/></div>
+           </div>
+           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+             <button className="btn sm" disabled={!!busy} onClick={saveEdit}>{busy||'حفظ'}</button>
+             <button className="btn ghost sm" onClick={()=>setEditId(null)}>إلغاء</button>
+             <button className="btn sm" style={{background:'var(--danger-l)',color:'var(--danger)',marginInlineStart:'auto'}} onClick={()=>delUser(u.id)}>🗑 حذف</button>
+           </div>
+         </div>
+       ):(
+         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+           <div><div style={{fontWeight:700}}>{u.full_name||'—'}</div><div className="soft" style={{fontSize:12}}>{u.email||'— بلا إيميل —'}</div></div>
+           <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+             {u.confirmed!==undefined&&<span className="tag" style={{background:u.confirmed?'var(--ok-l)':'var(--warn-l)',color:u.confirmed?'var(--ok)':'var(--warn)',fontWeight:700}}>{u.confirmed?'✓ موثّق':'غير موثّق'}</span>}
+             <span className="pill ai">{ROLE_AR[u.role]||u.role}</span>
+             <button className="btn ghost sm" onClick={()=>resetPass(u)}>🔑 كلمة مرور</button>
+             <button className="btn ghost sm" onClick={()=>openEdit(u)}>✏ تعديل</button>
+           </div>
+         </div>
+       )}
+     </div>))}
+   </div>
+  </>);
+}
+
+// ===== الإشعارات (حقيقية حسب الدور) =====
+function Notifications({role}){
+  const [items,setItems]=useState(null);
+  useEffect(()=>{(async()=>{
+    try{
+      if(role==='parent'){
+        const{data}=await sb.functions.invoke('parent-children',{body:{}});
+        const out=[];
+        ((data&&data.children)||[]).forEach(c=>{
+          const weak=c.subjects.filter(s=>s.accuracy<70).map(s=>s.subject);
+          if(weak.length)out.push({t:'danger',title:c.name+' يحتاج تقوية في: '+weak.join('، '),sub:'بناءً على نتائج الاختبارات'});
+          if(c.wrong>0)out.push({t:'warn',title:c.name+' عنده '+ar(c.wrong)+' أخطاء بحاجة مراجعة',sub:'افتح «أبنائي» لمتابعتها'});
+          if(c.modelsSolved>0)out.push({t:'ok',title:c.name+' حلّ '+ar(c.modelsSolved)+' نموذج اختبار',sub:'الدقة '+ar(c.accuracy)+'٪'});
+        });
+        if(!out.length)out.push({t:'ok',title:'لا توجد تنبيهات جديدة',sub:'سيظهر هنا تقدّم أبنائك أولاً بأول'});
+        setItems(out);
+      }else{
+        const{data}=await sb.from('accounts').select('full_name,role,created_at').order('created_at',{ascending:false}).limit(10);
+        const rar={super_admin:'مدير نظام',supervisor:'مشرف',parent:'ولي أمر',student:'طالب',teacher:'معلم'};
+        setItems((data||[]).map(a=>({t:'ok',title:'تسجيل جديد: '+(a.full_name||'—'),sub:(rar[a.role]||a.role)+' · '+new Date(a.created_at).toLocaleDateString('ar-SA')})));
+      }
+    }catch(e){setItems([{t:'warn',title:'تعذّر تحميل الإشعارات',sub:String(e)}]);}
+  })();},[role]);
+  const col={ok:'var(--ok)',warn:'var(--warn)',danger:'var(--danger)'};
+  return(<>
+   <PageHead title="الإشعارات" sub="آخر المستجدات والتنبيهات"/>
+   <div className="card">
+     {items===null&&<div className="soft">جارٍ التحميل...</div>}
+     {items&&items.length===0&&<div className="soft">لا توجد إشعارات.</div>}
+     {items&&items.map((n,i)=>(<div className="list-row" key={i}>
+       <div className="roundico" style={{background:col[n.t]+'22',color:col[n.t]}}>{Ico.bell}</div>
+       <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{n.title}</div><div className="soft" style={{fontSize:12}}>{n.sub}</div></div>
+     </div>))}
+   </div>
+  </>);
+}
+
+// ===== التقارير (إحصاءات حقيقية + طباعة) =====
+function Reports({counts,orgName}){
+  const [d,setD]=useState(null);
+  useEffect(()=>{(async()=>{
+    try{
+      const{data:accs}=await sb.from('accounts').select('role');
+      const roleC={};(accs||[]).forEach(a=>{roleC[a.role]=(roleC[a.role]||0)+1;});
+      const{data:cs}=await sb.from('courses').select('id');
+      // إحصاء دقيق من الخادم (يتجاوز حد ١٠٠٠ صف)
+      const{data:stats,error}=await sb.rpc('content_stats');
+      if(error)throw error;
+      const byC={};let totalQ=0;
+      (stats||[]).forEach(r=>{const q=Number(r.questions);totalQ+=q;
+        byC[r.course_id]=byC[r.course_id]||{title:r.title,grade:r.grade_level,term:r.term,total:0,p:{}};
+        byC[r.course_id].total+=q;
+        byC[r.course_id].p[r.exam_period]={q,m:Number(r.models)};});
+      const courses=Object.values(byC).sort((a,b)=>(a.grade-b.grade)||a.title.localeCompare(b.title,'ar'));
+      setD({roleC,courses,totalQ,courseCount:(cs||[]).length});
+    }catch(e){setD({err:String(e)});}
+  })();},[]);
+  const cell=(p)=> p?(ar(p.q)+' سؤال · '+ar(p.m)+' نموذج'):'—';
+  if(!d)return(<><PageHead title="التقارير" sub="نظرة شاملة على المنصة"/><div className="card soft">جارٍ التحميل...</div></>);
+  if(d.err)return(<><PageHead title="التقارير"/><div className="card" style={{color:'var(--danger)'}}>{d.err}</div></>);
+  return(<>
+   <PageHead title="التقارير" sub={"نظرة شاملة — "+(orgName||'مدرسة فطن')}
+     action={<button className="btn" onClick={()=>window.print()}>🖨️ طباعة</button>}/>
+   <div className="grid g4" style={{marginBottom:18}}>
+     <KPI icon={Ico.grad} val={ar(d.roleC.student||0)} lbl="الطلاب" tint={['var(--primary-l)','var(--primary-d)']}/>
+     <KPI icon={Ico.users} val={ar(d.roleC.parent||0)} lbl="أولياء الأمور" tint={['var(--accent-l)','var(--accent)']}/>
+     <KPI icon={Ico.book} val={ar(d.courseCount)} lbl="المواد" tint={['var(--ok-l)','var(--ok)']}/>
+     <KPI icon={Ico.brain} val={ar(d.totalQ)} lbl="إجمالي الأسئلة" tint={['var(--warn-l)','var(--warn)']}/>
+   </div>
+   <div className="card" style={{overflowX:'auto'}}>
+     <div className="card-title">المحتوى حسب المادة والترم والفترة</div>
+     <table><thead><tr><th>المادة</th><th>الصف</th><th>الترم</th><th>الفترة الأولى</th><th>الفترة الثانية</th><th>النهائي</th><th>المركزي</th><th>تدريبي</th><th>الإجمالي</th></tr></thead>
+     <tbody>
+      {d.courses.map((c,i)=>(<tr key={i}>
+        <td style={{fontWeight:600}}>{c.title}</td>
+        <td className="soft">{gradeLabel(c.grade)}</td>
+        <td className="soft">{c.term===1?'الأول':'الثاني'}</td>
+        <td>{cell(c.p.period1)}</td><td>{cell(c.p.period2)}</td><td>{cell(c.p.final)}</td><td>{cell(c.p.central)}</td><td>{cell(c.p.practice)}</td>
+        <td style={{fontWeight:800}}>{ar(c.total)}</td></tr>))}
+      {d.courses.length===0&&<tr><td colSpan="9" className="soft">لا توجد أسئلة بعد.</td></tr>}
+     </tbody></table>
+   </div>
+  </>);
+}
+
+// ===== إرفاق صور للأسئلة (للأسئلة المصوّرة مثل الإنجليزي) =====
+function QuestionImages(){
+  const [courses,setCourses]=useState([]);
+  const [cid,setCid]=useState('');
+  const [period,setPeriod]=useState('final');
+  const [model,setModel]=useState(1);
+  const [models,setModels]=useState([1]);
+  const [rows,setRows]=useState(null);
+  const [busy,setBusy]=useState('');
+  const PERIODS=[['final','النهائي'],['central','المركزي'],['period1','الفترة الأولى'],['period2','الفترة الثانية'],['practice','تدريبي']];
+  useEffect(()=>{(async()=>{const{data}=await sb.from('courses').select('id,title').order('title');setCourses(data||[]);if(data&&data[0])setCid(data[0].id);})();},[]);
+  useEffect(()=>{(async()=>{if(!cid)return;const{data}=await sb.from('questions').select('model_no').eq('course_id',cid).eq('exam_period',period);
+    const set=[...new Set((data||[]).map(r=>r.model_no||1))].sort((a,b)=>a-b);setModels(set.length?set:[1]);setModel(set.length?set[0]:1);})();},[cid,period]);
+  const load=async()=>{if(!cid){setRows([]);return;}setRows(null);
+    const{data}=await sb.from('questions').select('id,stem,image_url,q_type').eq('course_id',cid).eq('exam_period',period).eq('model_no',model).order('created_at');setRows(data||[]);};
+  useEffect(()=>{if(cid)load();},[cid,period,model]);
+  const toDataUrl=(file)=>new Promise((res,rej)=>{const img=new Image();const u=URL.createObjectURL(file);
+    img.onload=()=>{const max=700;const sc=Math.min(1,max/img.width);const c=document.createElement('canvas');
+      c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.85));};img.onerror=rej;img.src=u;});
+  const upload=async(q,file)=>{if(!file)return;setBusy(q.id);
+    try{const url=await toDataUrl(file);const{error}=await sb.from('questions').update({image_url:url}).eq('id',q.id);
+      if(error)alert('تعذّر الحفظ: '+error.message);else await load();}catch(e){alert('تعذّر رفع الصورة');}setBusy('');};
+  const remove=async(q)=>{setBusy(q.id);await sb.from('questions').update({image_url:null}).eq('id',q.id);await load();setBusy('');};
+  const genAI=async(q)=>{setBusy(q.id);
+    try{const{data,error}=await sb.functions.invoke('generate-question-image',{body:{question_id:q.id}});
+      if(error||(data&&data.error)){alert('تعذّر التوليد: '+((data&&data.error)||error.message));}else await load();}
+    catch(e){alert('تعذّر التوليد');}setBusy('');};
+  const selS={padding:'9px 11px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'};
+  return(<>
+   <PageHead title="🖼️ إرفاق صور للأسئلة" sub="ارفعي صورة لكل سؤال يحتاج صورة (مثل أسئلة الإنجليزي المصوّرة) — تظهر للطالب مع السؤال"/>
+   <div className="card" style={{marginBottom:14,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
+     <select value={cid} onChange={e=>setCid(e.target.value)} style={{...selS,minWidth:220}}>{courses.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select>
+     <select value={period} onChange={e=>setPeriod(e.target.value)} style={selS}>{PERIODS.map(([k,l])=><option key={k} value={k}>{l}</option>)}</select>
+     <select value={model} onChange={e=>setModel(Number(e.target.value))} style={selS}>{models.map(m=><option key={m} value={m}>النموذج {ar(m)}</option>)}</select>
+   </div>
+   <div className="card">
+     {rows===null&&<div className="soft">جارٍ التحميل...</div>}
+     {rows&&rows.length===0&&<div className="soft">لا توجد أسئلة في هذا النموذج.</div>}
+     {rows&&rows.map((q,i)=>(<div key={q.id} style={{display:'flex',gap:12,alignItems:'center',padding:'12px 0',borderBottom:'1px solid var(--line)'}}>
+       <div style={{flex:1}}>
+         <div style={{fontWeight:600,fontSize:14}}>{ar(i+1)}. <MathText text={q.stem}/></div>
+         {q.image_url&&<img src={q.image_url} alt="" style={{maxWidth:160,maxHeight:120,borderRadius:8,marginTop:6,border:'1px solid var(--line)'}}/>}
+       </div>
+       <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:130}}>
+         <label className="btn ghost sm" style={{cursor:'pointer',textAlign:'center'}}>
+           {busy===q.id?'...':(q.image_url?'تغيير الصورة':'⬆️ رفع صورة')}
+           <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>upload(q,e.target.files[0])}/>
+         </label>
+         <button className="btn sm" disabled={busy===q.id} onClick={()=>genAI(q)} style={{background:'var(--accent)',color:'#3a2a08'}}>{busy===q.id?'...':'🎨 توليد بالذكاء'}</button>
+         {q.image_url&&<button className="btn ghost sm" style={{color:'var(--danger)'}} disabled={busy===q.id} onClick={()=>remove(q)}>حذف الصورة</button>}
+       </div>
+     </div>))}
+   </div>
+  </>);
+}
+
+// ===== بلاغات الأسئلة (الطلاب يبلّغون عن أخطاء) =====
+function QuestionReports(){
+  const [rows,setRows]=useState(null);const [busy,setBusy]=useState('');
+  const load=async()=>{const{data,error}=await sb.rpc('question_reports_list');setRows(error?[]:(data||[]));};
+  useEffect(()=>{load();},[]);
+  const resolve=async(id)=>{setBusy(id);await sb.from('question_reports').update({status:'resolved'}).eq('id',id);setBusy('');load();};
+  const pLbl=(p)=> p==='period1'?'الفترة الأولى':p==='period2'?'الفترة الثانية':p==='central'?'المركزي':p==='practice'?'تدريبي':p==='final'?'النهائي':(p||'');
+  const fmt=(d)=> d?new Date(d).toLocaleString('ar-SA',{dateStyle:'medium',timeStyle:'short'}):'';
+  if(rows===null)return(<><PageHead title="🚩 بلاغات الأسئلة" sub="أخطاء أبلغ عنها الطلاب"/><div className="card soft">جارٍ التحميل...</div></>);
+  const newCount=rows.filter(r=>r.status==='new').length;
+  return(<>
+   <PageHead title="🚩 بلاغات الأسئلة" sub={"بلاغات الطلاب عن أخطاء في الأسئلة — جديدة: "+ar(newCount)}/>
+   <div className="card">
+     {rows.length===0&&<div className="soft">لا توجد بلاغات بعد.</div>}
+     {rows.map(r=>(<div key={r.id} style={{padding:'12px 0',borderBottom:'1px solid var(--line)',opacity:r.status==='resolved'?0.55:1}}>
+       <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+         <span className="tag" style={{background:r.status==='new'?'var(--warn-l)':'var(--ok-l)',color:r.status==='new'?'var(--warn)':'var(--ok)',fontWeight:700}}>{r.status==='new'?'جديد':'تمّت'}</span>
+         <div style={{flex:1}}>
+           <div style={{fontWeight:700,marginBottom:4}}><MathText text={r.stem||'(سؤال محذوف)'}/></div>
+           <div className="soft" style={{fontSize:13}}>{(r.subject||'')} · {pLbl(r.exam_period)}{r.model_no?(' · النموذج '+ar(r.model_no)):''}</div>
+           {r.reason&&<div style={{marginTop:5,padding:'8px 11px',borderRadius:9,background:'var(--danger-l)',color:'var(--danger)',fontWeight:600,fontSize:13}}>سبب البلاغ: {r.reason}</div>}
+           <div className="soft" style={{fontSize:12,marginTop:5}}>أبلغ: {r.reporter||'طالب'}{r.grade?(' · '+gradeLabel(r.grade)):''} · {fmt(r.created_at)}</div>
+         </div>
+         {r.status==='new'&&<button className="btn ghost sm" disabled={busy===r.id} onClick={()=>resolve(r.id)}>{busy===r.id?'...':'✓ تمّت المعالجة'}</button>}
+       </div>
+     </div>))}
+   </div>
+  </>);
+}
+
+// ===== بطاقات التعبير (حفظ نماذج الكتابة) — للطالب =====
+function WritingCards({grade}){
+  const [rows,setRows]=useState(null);
+  const [subj,setSubj]=useState('');
+  const [reveal,setReveal]=useState({});
+  useEffect(()=>{(async()=>{let qy=sb.from('writing_topics').select('*').order('subject').order('position').order('created_at');
+    if(grade)qy=qy.eq('grade',grade);const{data}=await qy;setRows(data||[]);})();},[grade]);
+  const speak=(t)=>{if(!window.speechSynthesis){alert('متصفحك لا يدعم الاستماع');return;}window.speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=0.92;window.speechSynthesis.speak(u);};
+  if(rows===null)return(<><PageHead title="✍️ بطاقات التعبير" sub="احفظ نماذج التعبير"/><div className="card soft">جارٍ التحميل...</div></>);
+  const subjects=[...new Set(rows.map(r=>r.subject))];
+  const list=subj?rows.filter(r=>r.subject===subj):rows;
+  return(<>
+   <PageHead title="✍️ بطاقات التعبير" sub="اقرأ العنوان، حاول تتذكّر النموذج، ثم اكشفه واستمع له لتحفظه"/>
+   {subjects.length>1&&<div className="card" style={{marginBottom:12,display:'flex',gap:8,flexWrap:'wrap'}}>
+     <button className={'btn '+(subj===''?'':'ghost')+' sm'} onClick={()=>setSubj('')}>الكل</button>
+     {subjects.map(s=><button key={s} className={'btn '+(subj===s?'':'ghost')+' sm'} onClick={()=>setSubj(s)}>{s}</button>)}
+   </div>}
+   {list.length===0&&<div className="card soft">لا توجد مواضيع تعبير بعد — يضيفها المشرف من «مواضيع التعبير».</div>}
+   {list.map(t=>{const open=reveal[t.id];return(<div className="card" key={t.id} style={{marginBottom:12}}>
+     <div style={{fontWeight:800,fontSize:16,marginBottom:8,color:'var(--primary-d)'}}>{t.title}</div>
+     {open?(<div>
+        <div style={{whiteSpace:'pre-line',lineHeight:2,fontSize:15,direction:'ltr',textAlign:'left',background:'var(--bg)',padding:'12px 14px',borderRadius:10}}>{t.model_text}</div>
+        <div style={{display:'flex',gap:8,marginTop:10}}>
+          <button className="btn ghost sm" onClick={()=>speak(t.model_text)}>🔊 استماع</button>
+          <button className="btn ghost sm" onClick={()=>{window.speechSynthesis&&window.speechSynthesis.cancel();setReveal(p=>({...p,[t.id]:false}));}}>إخفاء</button>
+        </div></div>
+     ):(<button className="btn sm" onClick={()=>setReveal(p=>({...p,[t.id]:true}))}>👁️ أظهر النموذج</button>)}
+   </div>);})}
+  </>);
+}
+// ===== مواضيع التعبير — للمشرف =====
+function WritingTopics(){
+  const [rows,setRows]=useState([]);
+  const [f,setF]=useState({subject:'الإنجليزية',grade:6,title:'',model_text:''});
+  const [msg,setMsg]=useState('');
+  const sel={width:'100%',padding:'12px',borderRadius:11,border:'1px solid var(--line)',fontFamily:'inherit'};
+  const load=async()=>{const{data}=await sb.from('writing_topics').select('*').order('created_at',{ascending:false});setRows(data||[]);};
+  useEffect(()=>{load();},[]);
+  const add=async()=>{if(!f.title.trim()||!f.model_text.trim()){setMsg('اكتب العنوان والنموذج');return;}
+    const{error}=await sb.from('writing_topics').insert({subject:f.subject.trim()||'الإنجليزية',grade:Number(f.grade),title:f.title.trim(),model_text:f.model_text.trim()});
+    if(error){setMsg('تعذّر: '+error.message);return;}setMsg('أُضيف ✅');setF({...f,title:'',model_text:''});load();};
+  const del=async(id)=>{if(!confirm('حذف هذا الموضوع؟'))return;await sb.from('writing_topics').delete().eq('id',id);load();};
+  return(<>
+   <PageHead title="✍️ مواضيع التعبير" sub="أضف عناوين التعبير ونماذجها ليحفظها الطالب كبطاقات"/>
+   <div className="card" style={{marginBottom:16}}>
+     <div className="card-title">➕ إضافة موضوع</div>
+     <div className="grid g2">
+       <div className="field"><label>المادة</label><input value={f.subject} onChange={e=>setF({...f,subject:e.target.value})} placeholder="الإنجليزية"/></div>
+       <div className="field"><label>الصف</label><select value={f.grade} onChange={e=>setF({...f,grade:Number(e.target.value)})} style={sel}><option value={6}>السادس الابتدائي</option><option value={9}>الثالث المتوسط</option></select></div>
+     </div>
+     <div className="field"><label>العنوان</label><input value={f.title} onChange={e=>setF({...f,title:e.target.value})} placeholder="Write about your field trip"/></div>
+     <div className="field"><label>النموذج (النص)</label><textarea rows={4} value={f.model_text} onChange={e=>setF({...f,model_text:e.target.value})} style={{...sel,direction:'ltr',resize:'vertical'}} placeholder="Last week we went to the science museum..."/></div>
+     <button className="btn" onClick={add}>إضافة</button>{msg&&<span style={{marginInlineStart:10,fontWeight:700}}>{msg}</span>}
+   </div>
+   <div className="card">
+     <div className="card-title">المواضيع ({ar(rows.length)})</div>
+     {rows.length===0&&<div className="soft">لا توجد مواضيع بعد.</div>}
+     {rows.map(t=>(<div key={t.id} style={{padding:'10px 0',borderBottom:'1px solid var(--line)'}}>
+       <div style={{display:'flex',justifyContent:'space-between',gap:10,alignItems:'flex-start'}}>
+         <div><div style={{fontWeight:700}}>{t.title}</div><div className="soft" style={{fontSize:12}}>{t.subject} · {gradeLabel(t.grade)}</div></div>
+         <button className="btn ghost sm" style={{color:'var(--danger)'}} onClick={()=>del(t.id)}>حذف</button>
+       </div>
+       <div className="soft" style={{fontSize:13,marginTop:4,direction:'ltr',textAlign:'left',whiteSpace:'pre-line'}}>{t.model_text}</div>
+     </div>))}
+   </div>
+  </>);
+}
+
+// ===== لوحة المتصدرين (تحدٍّ بين الطلاب — نفس الصف) =====
+function Leaderboard({adminMode}){
+  const [grade,setGrade]=useState(6);
+  const [subjects,setSubjects]=useState([]);
+  const [subject,setSubject]=useState('');// '' = كل المواد
+  const [rows,setRows]=useState(null);
+  useEffect(()=>{(async()=>{
+    const{data}=await sb.rpc('leaderboard_subjects',adminMode?{p_grade:grade}:{});
+    setSubjects((data||[]).map(r=>r.subject));})();},[grade,adminMode]);
+  const load=async()=>{setRows(null);
+    const args=adminMode?{p_grade:grade}:{};if(subject)args.p_subject=subject;
+    const{data,error}=await sb.rpc('leaderboard',args);
+    if(error){setRows([]);return;}setRows(data||[]);};
+  useEffect(()=>{load();},[grade,adminMode,subject]);
+  const medal=(i)=> i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+  const myRow=rows&&CURRENT_UID?rows.find(r=>r.student_id===CURRENT_UID):null;
+  if(rows===null)return(<><PageHead title="🏆 لوحة المتصدرين" sub="ترتيب الطلاب حسب الإجابات الصحيحة"/><div className="card soft">جارٍ التحميل...</div></>);
+  return(<>
+   <PageHead title="🏆 لوحة المتصدرين" sub={adminMode?'ترتيب الطلاب لكل مادة حسب عدد الإجابات الصحيحة':'ترتيبك بين زملائك في نفس الصف لكل مادة — اجمع إجابات صحيحة لترتفع!'}
+     action={<div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+       {adminMode&&<select value={grade} onChange={e=>setGrade(Number(e.target.value))}
+         style={{padding:'9px 12px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+         <option value={6}>السادس الابتدائي</option><option value={9}>الثالث المتوسط</option></select>}
+       <select value={subject} onChange={e=>setSubject(e.target.value)}
+         style={{padding:'9px 12px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'}}>
+         <option value="">كل المواد</option>
+         {subjects.map(s=><option key={s} value={s}>{s}</option>)}
+       </select>
+     </div>}/>
+   {!adminMode&&myRow&&(<div className="card" style={{marginBottom:14,background:'linear-gradient(135deg,var(--primary-l),var(--surface))',display:'flex',alignItems:'center',gap:14}}>
+     <div style={{fontSize:40,fontWeight:800,color:'var(--primary-d)'}}>#{ar(myRow.rank)}</div>
+     <div style={{flex:1}}><div style={{fontWeight:800,fontSize:16}}>ترتيبك الحالي</div>
+       <div className="soft">{ar(myRow.correct)} إجابة صحيحة · دقة {ar(myRow.accuracy)}٪ · من {ar(rows.length)} طالب</div></div>
+   </div>)}
+   <div className="card">
+     {rows.length===0&&<div className="soft">لا توجد نتائج بعد — ابدؤوا بحل الاختبارات لتظهر الأسماء!</div>}
+     {rows.map((r,i)=>{const me=CURRENT_UID&&r.student_id===CURRENT_UID;return(
+       <div key={r.student_id} style={{display:'flex',alignItems:'center',gap:12,padding:'11px 12px',borderRadius:11,marginBottom:4,
+         background:me?'var(--primary-l)':(i<3?'var(--warn-l)':'transparent'),fontWeight:me?800:600}}>
+         <div style={{width:38,textAlign:'center',fontSize:i<3?22:15,fontWeight:800,color:'var(--muted)'}}>{medal(i)||('#'+ar(r.rank))}</div>
+         <div style={{flex:1}}>{r.name||'طالب'}{me?' (أنت)':''}{adminMode?(' · '+gradeLabel(r.grade)):''}</div>
+         <div style={{fontWeight:800,color:'var(--primary-d)'}}>{ar(r.correct)} <span className="soft" style={{fontWeight:600,fontSize:12}}>صحيحة</span></div>
+         <div className="soft" style={{fontSize:12,minWidth:60,textAlign:'left'}}>{ar(r.accuracy)}٪ دقة</div>
+       </div>);})}
+   </div>
+  </>);
+}
+
+// ===== نشاط الطلاب (وقت الدخول والتدريب + تكلفة التوكنات) =====
+function StudentActivity(){
+  const [rows,setRows]=useState(null);
+  const SAR=3.75; // تحويل الدولار إلى ريال تقريباً
+  useEffect(()=>{(async()=>{
+    const[a,c]=await Promise.all([sb.rpc('student_activity'),sb.rpc('student_costs')]);
+    if(a.error){setRows([]);return;}
+    const costBy={};(c.data||[]).forEach(x=>{costBy[x.student_id]=x;});
+    const mx=(...ds)=>{const v=ds.filter(Boolean).map(d=>new Date(d).getTime());return v.length?Math.max(...v):0;};
+    const out=(a.data||[]).map(r=>{const k=costBy[r.student_id]||{};return{...r,active:mx(r.last_login,r.last_answer,r.last_run),
+      today_cost:Number(k.today_cost||0),total_cost:Number(k.total_cost||0),today_calls:Number(k.today_calls||0),total_calls:Number(k.total_calls||0)};})
+      .sort((a,b)=>b.active-a.active);
+    setRows(out);
+  })();},[]);
+  const fmt=(d)=> d?new Date(d).toLocaleString('ar-SA',{dateStyle:'medium',timeStyle:'short'}):'—';
+  const since=(t)=>{if(!t)return '—';const m=Math.floor((Date.now()-t)/60000);
+    if(m<1)return 'الآن';if(m<60)return 'قبل '+ar(m)+' د';const h=Math.floor(m/60);
+    if(h<24)return 'قبل '+ar(h)+' س';const d=Math.floor(h/24);return 'قبل '+ar(d)+' يوم';};
+  const sar=(usd)=>{const v=usd*SAR;return v<0.01&&v>0?ar(v.toFixed(3)):ar(v.toFixed(2));};
+  if(!rows)return(<><PageHead title="نشاط الطلاب" sub="متابعة الدخول والتدريب"/><div className="card soft">جارٍ التحميل...</div></>);
+  const sumToday=rows.reduce((s,r)=>s+r.today_cost,0);const sumTotal=rows.reduce((s,r)=>s+r.total_cost,0);
+  return(<>
+   <PageHead title="نشاط الطلاب والتكلفة" sub="متى دخل كل طالب ودرّب نفسه، وكم كلّف استخدامه للذكاء الاصطناعي"
+     action={<button className="btn ghost" onClick={()=>window.print()}>🖨️ طباعة</button>}/>
+   <div className="grid g2" style={{marginBottom:16}}>
+     <KPI icon={Ico.chart} val={sar(sumToday)+' ر.س'} lbl="إجمالي تكلفة اليوم (كل الطلاب)" tint={['var(--warn-l)','var(--warn)']}/>
+     <KPI icon={Ico.star} val={sar(sumTotal)+' ر.س'} lbl="إجمالي التكلفة الكلية" tint={['var(--primary-l)','var(--primary-d)']}/>
+   </div>
+   <div className="card" style={{overflowX:'auto'}}>
+     {rows.length===0&&<div className="soft">لا يوجد طلاب بعد.</div>}
+     {rows.length>0&&<table>
+       <thead><tr><th>الطالب</th><th>الصف</th><th>آخر دخول</th><th>منذ</th><th>أسئلة حلّها</th><th>نماذج</th><th>تكلفة اليوم</th><th>التكلفة الكلية</th></tr></thead>
+       <tbody>
+        {rows.map((r,i)=>{return(<tr key={i}>
+          <td style={{fontWeight:600}}>{r.name||'—'}</td>
+          <td className="soft">{gradeLabel(r.grade)}</td>
+          <td className="soft">{fmt(r.last_login)}</td>
+          <td><span className="tag" style={{background:r.active&&(Date.now()-r.active<86400000)?'var(--ok-l)':'var(--line)',color:r.active&&(Date.now()-r.active<86400000)?'var(--ok)':'var(--muted)'}}>{since(r.active)}</span></td>
+          <td>{ar(r.answered||0)}</td><td>{ar(r.exams||0)}</td>
+          <td style={{fontWeight:700,color:r.today_cost>0?'var(--warn)':'var(--muted)'}}>{sar(r.today_cost)} ر.س</td>
+          <td style={{fontWeight:700}}>{sar(r.total_cost)} ر.س</td></tr>);})}
+       </tbody></table>}
+     <div className="soft" style={{fontSize:12,marginTop:10,lineHeight:1.8}}>التكلفة تقديرية محسوبة من توكنات الذكاء الاصطناعي التي استهلكها الطالب (شرح «ارجع افهم» وتوليد الأسئلة التدريبية)، بأسعار OpenAI وبتحويل تقريبي للدولار ١ $ ≈ ٣٫٧٥ ر.س.</div>
+   </div>
+  </>);
+}
+
+// ===== إعدادات المنصة (الأترام المتاحة + تفعيل ميزات الذكاء) =====
+function Settings(){
+  const [s,setS]=useState(null);const [msg,setMsg]=useState('');const [busy,setBusy]=useState(false);
+  useEffect(()=>{(async()=>{
+    const{data}=await sb.from('app_settings').select('*').limit(1).maybeSingle();
+    setS(data||{org_id:'00000000-0000-0000-0000-0000000000aa',active_terms:[2],allow_explain:true,allow_lessons:true});
+  })();},[]);
+  const save=async()=>{
+    setBusy(true);setMsg('');
+    const{error}=await sb.from('app_settings').update({active_terms:s.active_terms,allow_explain:s.allow_explain,allow_lessons:s.allow_lessons,updated_at:new Date().toISOString()}).eq('org_id',s.org_id);
+    setBusy(false);setMsg(error?('تعذّر الحفظ: '+error.message):'تم حفظ الإعدادات ✅');
+  };
+  const toggleTerm=(t)=>{const a=new Set(s.active_terms||[]);a.has(t)?a.delete(t):a.add(t);setS({...s,active_terms:[...a].sort()});};
+  const Toggle=({on,onClick,label,note})=>(<div onClick={onClick} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 0',cursor:'pointer',borderBottom:'1px solid var(--line)'}}>
+    <div style={{width:46,height:26,borderRadius:999,background:on?'var(--primary)':'var(--line)',position:'relative',transition:'.2s',flex:'none'}}>
+      <div style={{position:'absolute',top:3,insetInlineStart:on?23:3,width:20,height:20,borderRadius:'50%',background:'#fff',transition:'.2s'}}/></div>
+    <div><div style={{fontWeight:700}}>{label}</div><div className="soft" style={{fontSize:13}}>{note}</div></div></div>);
+  if(!s)return(<><PageHead title="الإعدادات" sub="إعدادات المنصة"/><div className="card soft">جارٍ التحميل...</div></>);
+  return(<>
+   <PageHead title="الإعدادات" sub="تحكّم بالأترام المتاحة وميزات الذكاء الاصطناعي لتقليل التكلفة"/>
+   <div className="card" style={{marginBottom:16}}>
+     <div className="card-title">📅 الأترام المتاحة الآن</div>
+     <p className="soft" style={{marginBottom:10}}>اختر الترم/الأترام المفتوحة للطلاب حالياً.</p>
+     <div style={{display:'flex',gap:10}}>
+       {[[1,'الترم الأول'],[2,'الترم الثاني']].map(([t,l])=>{const on=(s.active_terms||[]).includes(t);return(
+         <button key={t} className={on?'btn':'btn ghost'} onClick={()=>toggleTerm(t)}>{on?'✓ ':''}{l}</button>);})}
+     </div>
+   </div>
+   <div className="card" style={{marginBottom:16}}>
+     <div className="card-title">🤖 ميزات الذكاء الاصطناعي</div>
+     <p className="soft" style={{marginBottom:6}}>إيقافها يقلّل استهلاك التوكن (الاختبارات والتصحيح تبقى تعمل دائماً بدون تكلفة).</p>
+     <Toggle on={s.allow_explain} onClick={()=>setS({...s,allow_explain:!s.allow_explain})} label="«ارجع افهم» (شرح خطوة بخطوة)" note="يستهلك توكن عند الطلب — مع تخزين مؤقت"/>
+     <Toggle on={s.allow_lessons} onClick={()=>setS({...s,allow_lessons:!s.allow_lessons})} label="الدروس بالشرح" note="فتح الدروس وشرحها بالذكاء"/>
+   </div>
+   {msg&&<div className="card" style={{background:'var(--ok-l)',color:'var(--ok)',fontWeight:700,marginBottom:12}}>{msg}</div>}
+   <button className="btn" disabled={busy} onClick={save}>{busy?'جارٍ الحفظ...':'حفظ الإعدادات'}</button>
+  </>);
+}
+
+function App(){
+  const [acct,setAcct]=useState(null);     // {role, full_name, org_id, org_name}
+  const [counts,setCounts]=useState(null);
+  const [view,setView]=useState('dash');
+  const [open,setOpen]=useState(false);
+  const [loading,setLoading]=useState(true);
+  const [newReports,setNewReports]=useState(0);
+  useEffect(()=>{(async()=>{
+    if(!acct||!(acct.role==='super_admin'||acct.role==='supervisor'))return;
+    try{const{count}=await sb.from('question_reports').select('*',{count:'exact',head:true}).eq('status','new');setNewReports(count||0);}catch(e){}
+  })();},[acct,view]);
+
+  const loadCounts=async(orgId)=>{
+    const tabs=['students','parents','courses','lessons','assessments'];
+    const out={};
+    await Promise.all(tabs.map(async t=>{
+      const {count}=await sb.from(t).select('*',{count:'exact',head:true});
+      out[t]=count??0;
+    }));
+    setCounts(out);
+  };
+  const loadSession=async()=>{
+    if(!CONFIGURED){setLoading(false);return;}
+    // قادم من الصفحة الرئيسية بطلب دخول/تسجيل جديد → اعرض شاشة الدخول دائماً
+    try{
+      const p=new URLSearchParams(location.search);
+      if(p.get('login')!=null||p.get('signup')!=null){
+        window.__fatinSignup=(p.get('signup')!=null);
+        if(sb)await sb.auth.signOut();CURRENT_UID=null;
+        history.replaceState({},'',location.pathname);
+        setAcct(null);setLoading(false);return;
+      }
+    }catch(e){}
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){CURRENT_UID=null;setAcct(null);setLoading(false);return;}
+    CURRENT_UID=session.user.id;
+    const {data:acc}=await sb.from('accounts')
+      .select('role, full_name, org_id, organizations(name)').eq('id',session.user.id).single();
+    if(!acc){setAcct({id:session.user.id,role:'student',full_name:'',email:session.user.email});setLoading(false);return;}
+    const a={id:session.user.id,role:acc.role,full_name:acc.full_name,org_id:acc.org_id,org_name:acc.organizations?.name};
+    setAcct(a);setLoading(false);
+    try{sb.from('accounts').update({last_login_at:new Date().toISOString()}).eq('id',session.user.id).then(()=>{});}catch(e){}
+    if(a.role==='super_admin'||a.role==='supervisor') loadCounts(a.org_id);
+  };
+  useEffect(()=>{loadSession();},[]);
+  const logout=async()=>{if(sb)await sb.auth.signOut();setAcct(null);setCounts(null);setView('dash');};
+
+  if(loading) return <div style={{height:'100vh',display:'grid',placeItems:'center',color:'var(--muted)',fontWeight:600}}>جارٍ التحميل...</div>;
+  if(!acct) return <Login onAuthed={()=>{setLoading(true);loadSession();}} startSignup={!!window.__fatinSignup}/>;
+  if(!acct.role) return (
+    <div style={{height:'100vh',display:'grid',placeItems:'center',padding:24}}>
+      <div className="card" style={{maxWidth:460,textAlign:'center'}}>
+        <h2 style={{marginBottom:10}}>حسابك بلا صلاحية بعد</h2>
+        <p className="soft" style={{lineHeight:2,marginBottom:16}}>سجّلت الدخول بنجاح ({acct.email})، لكن لا يوجد صف مرتبط في جدول accounts. أضف صفاً في accounts بنفس معرّف المستخدم ودوره، ثم أعد الدخول.</p>
+        <button className="btn" style={{margin:'0 auto'}} onClick={logout}>{Ico.shield} تسجيل الخروج</button>
+      </div>
+    </div>);
+
+  const role=acct.role;
+  const menu=MENUS[role]||MENUS.student;
+  const go=v=>{setView(v);setOpen(false);};
+  const render=()=>{
+    if(view==='users'&&(role==='super_admin'||role==='supervisor'))
+      return <UsersAdmin acct={acct}/>;
+    if(view==='content'&&(role==='super_admin'||role==='supervisor'))
+      return <Library acct={acct}/>;
+    if(view==='student_preview'&&(role==='super_admin'||role==='supervisor'))
+      return <StudentExperience acct={acct} nav="dash" preview={true}/>;
+    if(view==='notif'&&role!=='student') return <Notifications role={role}/>;
+    if(view==='reports'&&(role==='super_admin'||role==='supervisor'))
+      return <Reports counts={counts} orgName={acct.org_name}/>;
+    if(view==='settings'&&(role==='super_admin'||role==='supervisor'))
+      return <Settings/>;
+    if(view==='activity'&&(role==='super_admin'||role==='supervisor'))
+      return <StudentActivity/>;
+    if(view==='leaderboard'&&(role==='super_admin'||role==='supervisor'))
+      return <Leaderboard adminMode={true}/>;
+    if(view==='reports_q'&&(role==='super_admin'||role==='supervisor'))
+      return <QuestionReports/>;
+    if(view==='qimages'&&(role==='super_admin'||role==='supervisor'))
+      return <QuestionImages/>;
+    if(view==='writing_admin'&&(role==='super_admin'||role==='supervisor'))
+      return <WritingTopics/>;
+    if(role==='student') return <StudentExperience acct={acct} nav={view}/>;
+    if(role==='super_admin'||role==='supervisor') return <AdminDash counts={counts} orgName={acct.org_name}/>;
+    if(role==='parent') return <ParentDash/>;
+    if(role==='student'){
+      if(view==='lesson') return <LessonView/>;
+      if(view==='tutor') return <Tutor/>;
+      return <StudentDash go={go}/>;
+    }
+  };
+  return(
+   <div className="app">
+     <div className={"overlay"+(open?' show':'')} onClick={()=>setOpen(false)}/>
+     <aside className={"sidebar"+(open?' open':'')}>
+       <div className="brand"><span className="logo">فـ</span> فطن</div>
+       <div className="nav-sep">القائمة</div>
+       {menu.map(([k,l,ic])=>(
+         <button key={k} className={"nav-item"+(view===k?' active':'')} onClick={()=>go(k)} style={{display:'flex',alignItems:'center',gap:8}}>
+           {ic}<span>{l}</span>
+           {k==='reports_q'&&newReports>0&&<span style={{marginInlineStart:'auto',background:'var(--danger)',color:'#fff',borderRadius:999,minWidth:20,height:20,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,padding:'0 6px'}}>{ar(newReports)}</span>}
+         </button>))}
+       <div style={{marginTop:'auto'}}>
+         <div className="nav-sep">الحساب</div>
+         <button className="nav-item" onClick={logout}>{Ico.shield} تسجيل الخروج</button>
+       </div>
+     </aside>
+     <div className="main">
+       <div className="topbar">
+         <button className="icon-btn menu-btn" onClick={()=>setOpen(true)}>{Ico.menu}</button>
+         <div className="search">{Ico.search}<input placeholder="ابحث عن درس، طالب، اختبار..."/></div>
+         <div className="top-actions">
+           <button className="icon-btn">{Ico.bell}<span className="badge-dot"/></button>
+           <div style={{display:'flex',alignItems:'center',gap:10}}>
+             <div className="avatar">{(acct.full_name||ROLE_AR[role])[0]}</div>
+             <div style={{lineHeight:1.3}}><div style={{fontWeight:700,fontSize:14}}>{acct.full_name||ROLE_AR[role]}</div>
+               <div className="soft" style={{fontSize:12}}>{ROLE_AR[role]} · {acct.org_name||'مدرسة فطن'}</div></div>
+           </div>
+         </div>
+       </div>
+       <div className="content">{render()}</div>
+     </div>
+   </div>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
