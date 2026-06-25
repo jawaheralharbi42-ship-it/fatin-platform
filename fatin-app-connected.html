@@ -1925,8 +1925,8 @@ function StudentExperience({acct,nav,preview}){
 
 /* ================ APP SHELL ================ */
 const MENUS={
-  super_admin:[['dash','الرئيسية',Ico.dash],['users','إدارة المستخدمين',Ico.users],['content','المحتوى التعليمي',Ico.book],['qimages','إرفاق صور الأسئلة',Ico.book],['writing_admin','مواضيع التعبير',Ico.book],['reports_q','بلاغات الأسئلة',Ico.bell],['student_preview','معاينة الطالب',Ico.grad],['activity','نشاط الطلاب',Ico.grad],['leaderboard','لوحة المتصدرين',Ico.star],['reports','التقارير',Ico.chart],['settings','الإعدادات',Ico.shield],['notif','الإشعارات',Ico.bell]],
-  supervisor:[['dash','الرئيسية',Ico.dash],['content','المحتوى التعليمي',Ico.book],['qimages','إرفاق صور الأسئلة',Ico.book],['writing_admin','مواضيع التعبير',Ico.book],['reports_q','بلاغات الأسئلة',Ico.bell],['activity','نشاط الطلاب',Ico.grad],['leaderboard','لوحة المتصدرين',Ico.star],['reports','التقارير',Ico.chart],['settings','الإعدادات',Ico.shield],['notif','الإشعارات',Ico.bell]],
+  super_admin:[['dash','الرئيسية',Ico.dash],['users','إدارة المستخدمين',Ico.users],['content','المحتوى التعليمي',Ico.book],['review_q','مراجعة الأسئلة',Ico.task],['qimages','إرفاق صور الأسئلة',Ico.book],['writing_admin','مواضيع التعبير',Ico.book],['reports_q','بلاغات الأسئلة',Ico.bell],['student_preview','معاينة الطالب',Ico.grad],['activity','نشاط الطلاب',Ico.grad],['leaderboard','لوحة المتصدرين',Ico.star],['reports','التقارير',Ico.chart],['settings','الإعدادات',Ico.shield],['notif','الإشعارات',Ico.bell]],
+  supervisor:[['dash','الرئيسية',Ico.dash],['content','المحتوى التعليمي',Ico.book],['review_q','مراجعة الأسئلة',Ico.task],['qimages','إرفاق صور الأسئلة',Ico.book],['writing_admin','مواضيع التعبير',Ico.book],['reports_q','بلاغات الأسئلة',Ico.bell],['activity','نشاط الطلاب',Ico.grad],['leaderboard','لوحة المتصدرين',Ico.star],['reports','التقارير',Ico.chart],['settings','الإعدادات',Ico.shield],['notif','الإشعارات',Ico.bell]],
   parent:[['dash','أبنائي',Ico.users],['notif','الإشعارات',Ico.bell]],
   student:[['dash','لوحتي',Ico.dash],['subjects','موادي',Ico.book],['mistakes','أخطائي',Ico.task],['writing','بطاقات التعبير',Ico.book],['challenge','التحدي',Ico.star]],
 };
@@ -2356,6 +2356,128 @@ function WritingTopics(){
   </>);
 }
 
+// ===== أداة قص صورة من صفحة (للمشرف) =====
+function Cropper({onDone,onClose}){
+  const [src,setSrc]=useState('');
+  const imgRef=React.useRef(null);const wrapRef=React.useRef(null);
+  const [sel,setSel]=useState(null);const drag=React.useRef(null);
+  const onFile=(f)=>{if(!f)return;setSrc(URL.createObjectURL(f));setSel(null);};
+  const rel=(e)=>{const r=wrapRef.current.getBoundingClientRect();return {x:Math.max(0,Math.min(e.clientX-r.left,r.width)),y:Math.max(0,Math.min(e.clientY-r.top,r.height))};};
+  const down=(e)=>{if(!src)return;e.preventDefault();const p=rel(e);drag.current=p;setSel({x:p.x,y:p.y,w:0,h:0});};
+  const move=(e)=>{if(!drag.current)return;e.preventDefault();const p=rel(e);const s=drag.current;setSel({x:Math.min(s.x,p.x),y:Math.min(s.y,p.y),w:Math.abs(p.x-s.x),h:Math.abs(p.y-s.y)});};
+  const up=()=>{drag.current=null;};
+  const crop=()=>{
+    const img=imgRef.current;if(!img||!sel||sel.w<8||sel.h<8){alert('حدّدي منطقة الصورة بسحب الإصبع/الماوس على الصورة');return;}
+    const scale=img.naturalWidth/img.clientWidth;
+    const sx=sel.x*scale,sy=sel.y*scale,sw=sel.w*scale,sh=sel.h*scale;
+    const maxw=700,r=Math.min(1,maxw/sw);const c=document.createElement('canvas');
+    c.width=Math.round(sw*r);c.height=Math.round(sh*r);
+    c.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height);
+    onDone(c.toDataURL('image/jpeg',0.85));
+  };
+  return(<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:200,display:'flex',alignItems:'center',justifyContent:'center',padding:16}}>
+    <div className="card" style={{maxWidth:760,width:'100%',maxHeight:'92vh',overflow:'auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+        <div className="card-title" style={{margin:0}}>✂️ قص صورة وإرفاقها</div>
+        <button className="btn ghost sm" onClick={onClose}>إغلاق</button></div>
+      <div className="soft" style={{fontSize:13,marginBottom:8}}>ارفعي صورة صفحة الاختبار، ثم اسحبي بإصبعك/الماوس على الصورة لتحديد مكان صورة السؤال، ثم اضغطي «قص وإرفاق».</div>
+      <label className="btn ghost sm" style={{cursor:'pointer'}}>⬆️ اختر صورة الصفحة<input type="file" accept="image/*" style={{display:'none'}} onChange={e=>onFile(e.target.files[0])}/></label>
+      {src&&<div ref={wrapRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={up}
+        style={{position:'relative',marginTop:10,touchAction:'none',userSelect:'none',display:'inline-block',maxWidth:'100%'}}>
+        <img ref={imgRef} src={src} alt="" style={{maxWidth:'100%',display:'block',pointerEvents:'none'}}/>
+        {sel&&<div style={{position:'absolute',left:sel.x,top:sel.y,width:sel.w,height:sel.h,border:'2px solid var(--primary)',background:'rgba(14,156,138,.15)'}}/>}
+      </div>}
+      {src&&<div style={{display:'flex',gap:8,marginTop:10}}>
+        <button className="btn" onClick={crop}>✂️ قص وإرفاق</button>
+        <button className="btn ghost" onClick={()=>setSel(null)}>مسح التحديد</button>
+      </div>}
+    </div>
+  </div>);
+}
+
+// ===== مراجعة الأسئلة والنماذج (تعديل + إرفاق صورة بالقص) =====
+function QuestionReview(){
+  const [courses,setCourses]=useState([]);const [cid,setCid]=useState('');
+  const [period,setPeriod]=useState('final');const [model,setModel]=useState(1);const [models,setModels]=useState([1]);
+  const [rows,setRows]=useState(null);const [busy,setBusy]=useState('');const [msg,setMsg]=useState('');
+  const [editId,setEditId]=useState(null);const [ef,setEf]=useState(null);
+  const [cropFor,setCropFor]=useState(null);
+  const PERIODS=[['final','النهائي'],['central','المركزي'],['period1','الفترة الأولى'],['period2','الفترة الثانية'],['practice','تدريبي']];
+  const selS={padding:'9px 11px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'};
+  useEffect(()=>{(async()=>{const{data}=await sb.from('courses').select('id,title').order('title');setCourses(data||[]);if(data&&data[0])setCid(data[0].id);})();},[]);
+  useEffect(()=>{(async()=>{if(!cid)return;const{data}=await sb.from('questions').select('model_no').eq('course_id',cid).eq('exam_period',period);
+    const set=[...new Set((data||[]).map(r=>r.model_no||1))].sort((a,b)=>a-b);setModels(set.length?set:[1]);setModel(set.length?set[0]:1);})();},[cid,period]);
+  const load=async()=>{if(!cid){setRows([]);return;}setRows(null);
+    const{data}=await sb.from('questions').select('*').eq('course_id',cid).eq('exam_period',period).eq('model_no',model).order('created_at');setRows(data||[]);};
+  useEffect(()=>{if(cid)load();},[cid,period,model]);
+  const openEdit=(q)=>{
+    const opts=Array.isArray(q.options)?q.options.map(o=>({key:o.key,text:o.text,is_correct:!!o.is_correct})):[];
+    setEf({q_type:q.q_type,stem:q.stem||'',explanation:q.explanation||'',options:opts,
+      correctKey:(opts.find(o=>o.is_correct)||{}).key||q.correct_answer,
+      correctBool:(q.correct_answer===true||q.correct_answer==='true'),
+      correctText:(q.q_type==='essay'||q.q_type==='short_answer')?(typeof q.correct_answer==='string'?q.correct_answer:''):''});
+    setEditId(q.id);setMsg('');
+  };
+  const save=async()=>{
+    setBusy('save');let payload={stem:ef.stem,explanation:ef.explanation};
+    if(ef.q_type==='mcq'){payload.options=ef.options.map(o=>({key:o.key,text:o.text,is_correct:o.key===ef.correctKey}));payload.correct_answer=ef.correctKey;}
+    else if(ef.q_type==='true_false'){payload.correct_answer=ef.correctBool;}
+    else{payload.correct_answer=ef.correctText;}
+    const{error}=await sb.from('questions').update(payload).eq('id',editId);
+    setBusy('');if(error){setMsg('تعذّر: '+error.message);return;}setEditId(null);setMsg('تم الحفظ ✅');load();
+  };
+  const del=async(id)=>{if(!confirm('حذف هذا السؤال نهائياً؟'))return;await sb.from('questions').delete().eq('id',id);load();};
+  const setImage=async(id,dataUrl)=>{setBusy('img'+id);await sb.from('questions').update({image_url:dataUrl}).eq('id',id);setBusy('');setCropFor(null);load();};
+  const removeImg=async(id)=>{setBusy('img'+id);await sb.from('questions').update({image_url:null}).eq('id',id);setBusy('');load();};
+  const TLBL={mcq:'اختيار',true_false:'صح/خطأ',essay:'مقالي',short_answer:'أكمل الفراغ',ordering:'ترتيب'};
+  return(<>
+   <PageHead title="📝 مراجعة الأسئلة والنماذج" sub="عدّلي أي سؤال، وأرفقي له صورة بالقص عند الحاجة"/>
+   <div className="card" style={{marginBottom:14,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
+     <select value={cid} onChange={e=>setCid(e.target.value)} style={{...selS,minWidth:220}}>{courses.map(c=><option key={c.id} value={c.id}>{c.title}</option>)}</select>
+     <select value={period} onChange={e=>setPeriod(e.target.value)} style={selS}>{PERIODS.map(([k,l])=><option key={k} value={k}>{l}</option>)}</select>
+     <select value={model} onChange={e=>setModel(Number(e.target.value))} style={selS}>{models.map(m=><option key={m} value={m}>النموذج {ar(m)}</option>)}</select>
+     {msg&&<span style={{fontWeight:700}}>{msg}</span>}
+   </div>
+   <div className="card">
+     {rows===null&&<div className="soft">جارٍ التحميل...</div>}
+     {rows&&rows.length===0&&<div className="soft">لا توجد أسئلة في هذا النموذج.</div>}
+     {rows&&rows.map((q,i)=>(<div key={q.id} style={{padding:'12px 0',borderBottom:'1px solid var(--line)'}}>
+       {editId===q.id?(
+         <div>
+           <div className="field"><label>نص السؤال</label><textarea rows={2} value={ef.stem} onChange={e=>setEf({...ef,stem:e.target.value})} style={{width:'100%',padding:10,borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'}}/></div>
+           {ef.q_type==='mcq'&&ef.options.map((o,j)=>(<div key={j} style={{display:'flex',gap:8,alignItems:'center',marginBottom:6}}>
+             <input type="radio" name={'c'+q.id} checked={ef.correctKey===o.key} onChange={()=>setEf({...ef,correctKey:o.key})}/>
+             <span style={{fontWeight:700,minWidth:18}}>{o.key}</span>
+             <input value={o.text} onChange={e=>{const op=[...ef.options];op[j]={...o,text:e.target.value};setEf({...ef,options:op});}} style={{flex:1,padding:8,borderRadius:8,border:'1px solid var(--line)',fontFamily:'inherit'}}/>
+           </div>))}
+           {ef.q_type==='true_false'&&<div className="field"><label>الإجابة الصحيحة</label>
+             <select value={ef.correctBool?'1':'0'} onChange={e=>setEf({...ef,correctBool:e.target.value==='1'})} style={selS}><option value="1">صح</option><option value="0">خطأ</option></select></div>}
+           {(ef.q_type==='essay'||ef.q_type==='short_answer')&&<div className="field"><label>الإجابة النموذجية</label><textarea rows={2} value={ef.correctText} onChange={e=>setEf({...ef,correctText:e.target.value})} style={{width:'100%',padding:10,borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'}}/></div>}
+           <div className="field"><label>التفسير (اختياري)</label><input value={ef.explanation} onChange={e=>setEf({...ef,explanation:e.target.value})} style={{width:'100%',padding:9,borderRadius:9,border:'1px solid var(--line)',fontFamily:'inherit'}}/></div>
+           <div style={{display:'flex',gap:8}}><button className="btn sm" disabled={busy==='save'} onClick={save}>{busy==='save'?'...':'حفظ'}</button><button className="btn ghost sm" onClick={()=>setEditId(null)}>إلغاء</button></div>
+         </div>
+       ):(
+         <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+           <div style={{flex:1}}>
+             <div style={{fontWeight:700}}>{ar(i+1)}. <MathText text={q.stem}/> <span className="tag" style={{background:'var(--primary-l)',color:'var(--primary-d)',fontSize:11}}>{TLBL[q.q_type]||q.q_type}</span></div>
+             {Array.isArray(q.options)&&<div className="soft" style={{fontSize:13,marginTop:4}}>{q.options.map(o=>(o.is_correct?'✅ ':'')+o.key+') '+o.text).join('  ·  ')}</div>}
+             {(q.q_type==='essay'||q.q_type==='short_answer')&&q.correct_answer&&<div className="soft" style={{fontSize:13,marginTop:4}}>الإجابة: {String(q.correct_answer)}</div>}
+             {q.image_url&&<img src={q.image_url} alt="" style={{maxWidth:150,maxHeight:110,borderRadius:8,marginTop:6,border:'1px solid var(--line)'}}/>}
+           </div>
+           <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:120}}>
+             <button className="btn ghost sm" onClick={()=>openEdit(q)}>✏ تعديل</button>
+             <button className="btn sm" style={{background:'var(--accent)',color:'#3a2a08'}} onClick={()=>setCropFor(q.id)}>✂️ قص صورة</button>
+             {q.image_url&&<button className="btn ghost sm" style={{color:'var(--danger)'}} onClick={()=>removeImg(q.id)}>حذف الصورة</button>}
+             <button className="btn ghost sm" style={{color:'var(--danger)'}} onClick={()=>del(q.id)}>🗑 حذف</button>
+           </div>
+         </div>
+       )}
+     </div>))}
+   </div>
+   {cropFor&&<Cropper onClose={()=>setCropFor(null)} onDone={(d)=>setImage(cropFor,d)}/>}
+  </>);
+}
+
 // ===== لوحة المتصدرين (تحدٍّ بين الطلاب — نفس الصف) =====
 function Leaderboard({adminMode}){
   const [grade,setGrade]=useState(6);
@@ -2569,6 +2691,8 @@ function App(){
       return <Leaderboard adminMode={true}/>;
     if(view==='reports_q'&&(role==='super_admin'||role==='supervisor'))
       return <QuestionReports/>;
+    if(view==='review_q'&&(role==='super_admin'||role==='supervisor'))
+      return <QuestionReview/>;
     if(view==='qimages'&&(role==='super_admin'||role==='supervisor'))
       return <QuestionImages/>;
     if(view==='writing_admin'&&(role==='super_admin'||role==='supervisor'))
