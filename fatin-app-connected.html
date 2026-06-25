@@ -1249,8 +1249,40 @@ function ExplainMore({qid,gender}){
       {data.intro&&<Card label="الفكرة 💡" text={data.intro} tint="var(--accent-l)"/>}
       {steps.slice(0,shown).map((s,i)=><Card key={i} label={'خطوة '+ar(i+1)} text={s.text}/>)}
       {shown<steps.length&&<button className="btn sm" style={{marginTop:8}} onClick={()=>setShown(shown+1)}>الخطوة التالية ←</button>}
+      {shown>=steps.length&&data.pitfall&&<Card label="انتبه ⚠️" text={data.pitfall} tint="var(--warn-l)"/>}
       {shown>=steps.length&&data.answer&&<Card label="الإجابة الصحيحة ✅" text={data.answer} tint="var(--ok-l)"/>}
     </div>}
+  </div>);
+}
+// شات الذكاء أسفل السؤال: الطالب يسأل عن السؤال إذا ما فهم
+function QuestionChat({qid,gender}){
+  const [open,setOpen]=useState(false);
+  const [msgs,setMsgs]=useState([]);
+  const [text,setText]=useState('');
+  const [busy,setBusy]=useState(false);
+  const send=async()=>{
+    const m=text.trim();if(!m||busy)return;
+    const prev=msgs;setMsgs([...prev,{role:'user',content:m}]);setText('');setBusy(true);
+    const{data,error}=await sb.functions.invoke('ask-tutor',{body:{question_id:qid,message:m,history:prev.slice(-6),gender:gender||'male'}});
+    setBusy(false);
+    const ans=(data&&data.answer)||(data&&data.error)||(error&&error.message)||'تعذّر الرد';
+    setMsgs(h=>[...h,{role:'assistant',content:ans}]);
+  };
+  if(!open)return <button type="button" className="btn ghost sm" style={{marginTop:8}} onClick={()=>setOpen(true)}>💬 اسأل الذكاء عن هذا السؤال</button>;
+  return(<div style={{marginTop:10,border:'1px solid var(--primary)',borderRadius:12,padding:11,background:'var(--surface)'}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+      <div style={{fontWeight:800,color:'var(--primary-d)'}}>💬 اسأل عن السؤال</div>
+      <button type="button" className="btn ghost sm" onClick={()=>setOpen(false)}>إغلاق</button></div>
+    {msgs.length===0&&<div className="soft" style={{fontSize:13,marginBottom:6}}>اكتب أي شيء ما فهمته في هذا السؤال وأشرحه لك ببساطة.</div>}
+    {msgs.map((m,i)=>(<div key={i} style={{margin:'6px 0',display:'flex',justifyContent:m.role==='user'?'flex-start':'flex-end'}}>
+      <span style={{display:'inline-block',padding:'8px 12px',borderRadius:12,maxWidth:'88%',lineHeight:1.9,
+        background:m.role==='user'?'var(--primary-l)':'var(--bg)',color:'var(--ink)'}}><MathText text={m.content}/></span></div>))}
+    {busy&&<div className="soft" style={{fontSize:13}}>يكتب… ⏳</div>}
+    <div style={{display:'flex',gap:6,marginTop:8}}>
+      <input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')send();}} placeholder="اكتب سؤالك هنا..."
+        style={{flex:1,padding:'10px 12px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'}}/>
+      <button type="button" className="btn sm" disabled={busy} onClick={send}>إرسال</button>
+    </div>
   </div>);
 }
 
@@ -1472,6 +1504,7 @@ function CourseExam({course,period,model,onAnother,canAnother,gender,allowExplai
           {allowExplain&&sel!==k&&<ExplainMore qid={q.id} gender={gender}/>}
         </div>)}
         </>}
+        {allowExplain&&<QuestionChat qid={q.id} gender={gender}/>}
         <ReportButton q={q} subject={course.title}/>
       </div>);})}
     {allDone&&(<div className="card" style={{background:'var(--primary-l)'}}>
@@ -2192,8 +2225,9 @@ function QuestionImages(){
     try{const url=await toDataUrl(file);const{error}=await sb.from('questions').update({image_url:url}).eq('id',q.id);
       if(error)alert('تعذّر الحفظ: '+error.message);else await load();}catch(e){alert('تعذّر رفع الصورة');}setBusy('');};
   const remove=async(q)=>{setBusy(q.id);await sb.from('questions').update({image_url:null}).eq('id',q.id);await load();setBusy('');};
+  const [hints,setHints]=useState({});
   const genAI=async(q)=>{setBusy(q.id);
-    try{const{data,error}=await sb.functions.invoke('generate-question-image',{body:{question_id:q.id}});
+    try{const{data,error}=await sb.functions.invoke('generate-question-image',{body:{question_id:q.id,hint:(hints[q.id]||'').trim()}});
       if(error||(data&&data.error)){alert('تعذّر التوليد: '+((data&&data.error)||error.message));}else await load();}
     catch(e){alert('تعذّر التوليد');}setBusy('');};
   const selS={padding:'9px 11px',borderRadius:10,border:'1px solid var(--line)',fontFamily:'inherit'};
@@ -2212,12 +2246,14 @@ function QuestionImages(){
          <div style={{fontWeight:600,fontSize:14}}>{ar(i+1)}. <MathText text={q.stem}/></div>
          {q.image_url&&<img src={q.image_url} alt="" style={{maxWidth:160,maxHeight:120,borderRadius:8,marginTop:6,border:'1px solid var(--line)'}}/>}
        </div>
-       <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:130}}>
+       <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:170}}>
+         <input value={hints[q.id]||''} onChange={e=>setHints(h=>({...h,[q.id]:e.target.value}))} placeholder="وصف الصورة (مثل: life jacket)"
+           style={{padding:'7px 9px',borderRadius:9,border:'1px solid var(--line)',fontFamily:'inherit',fontSize:12,direction:'ltr'}}/>
+         <button className="btn sm" disabled={busy===q.id} onClick={()=>genAI(q)} style={{background:'var(--accent)',color:'#3a2a08'}}>{busy===q.id?'...':'🎨 توليد بالذكاء'}</button>
          <label className="btn ghost sm" style={{cursor:'pointer',textAlign:'center'}}>
            {busy===q.id?'...':(q.image_url?'تغيير الصورة':'⬆️ رفع صورة')}
            <input type="file" accept="image/*" style={{display:'none'}} onChange={e=>upload(q,e.target.files[0])}/>
          </label>
-         <button className="btn sm" disabled={busy===q.id} onClick={()=>genAI(q)} style={{background:'var(--accent)',color:'#3a2a08'}}>{busy===q.id?'...':'🎨 توليد بالذكاء'}</button>
          {q.image_url&&<button className="btn ghost sm" style={{color:'var(--danger)'}} disabled={busy===q.id} onClick={()=>remove(q)}>حذف الصورة</button>}
        </div>
      </div>))}
