@@ -1504,7 +1504,7 @@ function CourseExam({course,period,model,onAnother,canAnother,gender,allowExplai
           {allowExplain&&sel!==k&&<ExplainMore qid={q.id} gender={gender}/>}
         </div>)}
         </>}
-        {allowExplain&&<QuestionChat qid={q.id} gender={gender}/>}
+        {allowExplain&&done&&<QuestionChat qid={q.id} gender={gender}/>}
         <ReportButton q={q} subject={course.title}/>
       </div>);})}
     {allDone&&(<div className="card" style={{background:'var(--primary-l)'}}>
