@@ -710,6 +710,7 @@ function Library({acct}){
   const [importing,setImporting]=useState('');
   const [exImporting,setExImporting]=useState('');
   const [exMode,setExMode]=useState('mcq');// mcq | all | essay
+  const [exDedupe,setExDedupe]=useState(true);// تجاهل المكرر
   const [exPeriod,setExPeriod]=useState('final');
   const [exModel,setExModel]=useState(1);
   const examPdfRef=React.useRef();
@@ -774,11 +775,11 @@ function Library({acct}){
     const file=e.target.files[0];if(!file)return;
     try{
       const imgs=await renderPdfImages(file);
-      let total=0;
+      let total=0,skipped=0;
       for(let i=0;i<imgs.length;i++){
         setExImporting(`الذكاء الاصطناعي يستخرج الأسئلة... صفحة ${i+1}/${imgs.length} (المُضاف: ${total})`);
-        const{data,error}=await sb.functions.invoke('import-exam-vision',{body:{course_id:course.id,exam_period:exPeriod,image:imgs[i],include_essay:exMode!=='mcq',essay_only:exMode==='essay'}});
-        if(!error&&data&&data.imported)total+=data.imported;
+        const{data,error}=await sb.functions.invoke('import-exam-vision',{body:{course_id:course.id,exam_period:exPeriod,image:imgs[i],include_essay:exMode!=='mcq',essay_only:exMode==='essay',dedupe:exDedupe}});
+        if(!error&&data){total+=data.imported||0;skipped+=data.skipped||0;}
       }
       // ترتيب تلقائي: حذف المكرّر التام + تقسيم مبدئي
       setExImporting('يرتّب الأسئلة في نماذج كاملة...');
@@ -788,7 +789,7 @@ function Library({acct}){
       const{data:am}=await sb.functions.invoke('arrange-models',{body:{course_id:course.id,exam_period:exPeriod}});
       setExImporting('');if(examPdfRef.current)examPdfRef.current.value='';
       const pName=exPeriod==='final'?'النهائي':exPeriod==='period1'?'الفترة الأولى':exPeriod==='central'?'المركزي':'الفترة الثانية';
-      flash(`تم ✅ ${total} سؤال — نُظّفت وصُحّحت ووُلّدت أشكالها ورُتّبت في ${am?.models||0} نموذج بلا تكرار (${pName})`);loadCourseStats(course.id);
+      flash(`تم ✅ أُضيف ${total} سؤال${skipped?` · تم تجاهل ${skipped} مكرّر`:''} — ورُتّبت في ${am?.models||0} نموذج (${pName})`);loadCourseStats(course.id);
     }catch(err){setExImporting('');flash('خطأ: '+String(err));}
   };
   // مراجعة وتصحيح الأسئلة بالذكاء (يصحّح الإجابات + يبسّط الشرح + يحذف التالف)
@@ -1109,6 +1110,10 @@ function Library({acct}){
                </select>
                <span className="soft" style={{fontSize:12}}>المقالية يجاوب عليها الطالب بالكيبورد أو القلم ويصحّحها الذكاء</span>
              </div>
+             <label style={{display:'flex',alignItems:'center',gap:8,marginTop:8,fontWeight:600,fontSize:13,cursor:'pointer'}}>
+               <input type="checkbox" checked={exDedupe} onChange={e=>setExDedupe(e.target.checked)} style={{width:18,height:18}}/>
+               بدون تكرار — تجاهل الأسئلة الموجودة مسبقاً في المادة (يضيف الجديد فقط)
+             </label>
            </div>
          </div>
          <div style={{marginTop:12,borderTop:'1px dashed var(--line)',paddingTop:12}}>
@@ -1868,20 +1873,11 @@ function StudentExperience({acct,nav,preview}){
     </div>
   </>);
 
-  // ٦) أداء الاختبار — تظهر كل النماذج ويُفتح كل نموذج كاملاً
+  // ٦) أداء الاختبار — يُختار نموذج تلقائياً (بدون شاشة اختيار)
   if(mode==='exams'&&exam)return(<>
     {previewBar}
     <PageHead title={examLabel(exam)+(examModel?(' — النموذج '+ar(examModel)):'')} sub={course.title}
       action={<button className="btn ghost sm" onClick={()=>{setExam(null);setExamModel(null);}}>→ الاختبارات</button>}/>
-    {availModels.length>1&&(<div className="card" style={{marginBottom:14}}>
-      <div className="card-title" style={{marginBottom:8}}>اختر النموذج ({ar(availModels.length)} نماذج)</div>
-      <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-        {availModels.map(m=>(<button key={m} onClick={()=>setExamModel(m)}
-          style={{padding:'9px 16px',borderRadius:11,border:'1.5px solid '+(m===examModel?'var(--primary)':'var(--line)'),
-            background:m===examModel?'var(--primary)':'var(--surface)',color:m===examModel?'#fff':'var(--ink)',
-            fontFamily:'inherit',fontWeight:700,fontSize:14,cursor:'pointer'}}>النموذج {ar(m)}</button>))}
-      </div>
-    </div>)}
     {examModel
       ? <CourseExam key={exam+'-'+examModel} course={course} period={exam} model={examModel} onAnother={anotherModel} canAnother={availModels.length>1} gender={gen} allowExplain={explainOn} onGenerate={studentGenerate} canGenerate={explainOn} genBusy={genBusy}/>
       : <div className="card soft">جاري تجهيز نموذج الاختبار...</div>}
